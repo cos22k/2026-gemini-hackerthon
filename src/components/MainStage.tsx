@@ -39,6 +39,7 @@ export default function MainStage({
 
   const showEffects = !!environment && ['environment', 'evolving', 'trial'].includes(phase);
   const showEvolvingVisual = phase === 'evolving' && !evolution;
+  const showEvolutionTransition = phase === 'evolving' && !!evolution;
 
   return (
     <div className="stage">
@@ -52,7 +53,7 @@ export default function MainStage({
         />
       )}
 
-      {/* Evolving ink morph visual */}
+      {/* Evolving ink morph visual (during API wait) */}
       {showEvolvingVisual && (
         <>
           <div className="evolving-effect" />
@@ -60,26 +61,20 @@ export default function MainStage({
         </>
       )}
 
+      {/* Evolution transition effect (when result arrives) */}
+      {showEvolutionTransition && (
+        <div className="evolution-morph" />
+      )}
+
       <div className="stage__content">
-        {phase === 'evolving' && evolution ? (
-          <div className="evolution">
-            <h2 className="evolution__name">{evolution.newName}</h2>
-            <p className="evolution__summary">{evolution.evolutionSummary}</p>
-            <div className="evolution__tradeoffs">
-              {evolution.tradeoffs.map((t, i) => (
-                <p key={i} className="evolution__tradeoff">{t}</p>
-              ))}
-            </div>
-            <p className="evolution__poetic">"{evolution.poeticLine}"</p>
-          </div>
-        ) : phase === 'trial' && trial ? (
+        {phase === 'trial' && trial ? (
           <TrialView trial={trial} />
         ) : phase === 'synthesis' || phase === 'epilogue' ? (
           children
         ) : (
           creature && (
             <>
-              <div className="stage__creature-area">
+              <div className={`stage__creature-area${showEvolutionTransition ? ' stage__creature-area--morphing' : ''}`}>
                 <WorldScene
                   ref={worldRef}
                   weather="none"
@@ -94,6 +89,14 @@ export default function MainStage({
           )
         )}
       </div>
+
+      {/* Evolution name toast overlay */}
+      {showEvolutionTransition && evolution && (
+        <div className="evolution-toast">
+          <span className="evolution-toast__name">{evolution.newName}</span>
+          <span className="evolution-toast__poetic">"{evolution.poeticLine}"</span>
+        </div>
+      )}
 
       {/* Environment info banner (replaces modal) */}
       {phase === 'environment' && environment && (

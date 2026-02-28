@@ -154,10 +154,11 @@ Output schema:
   "poetic_line": "이 진화를 한 줄로 요약하는 관찰 기록",
   "image_prompt": "진화된 생명체의 영어 이미지 프롬프트. 부모와의 차이점 강조.",
   "creature_spec_mutation": {
-    "body": { "color": "new hex color if changed" },
-    "eyes": { "variant": "new variant if changed" },
-    "mouth": { "variant": "new variant if changed" },
-    "movement": "new movement if changed"
+    "body": { "shape": "optional", "width": "optional int", "height": "optional int", "color": "new hex if changed", "stroke": "optional" },
+    "eyes": { "variant": "optional", "size": "optional int", "spacing": "optional int", "offsetY": "optional int", "count": "optional int 1~4" },
+    "mouth": { "variant": "optional", "width": "optional int", "offsetY": "optional int" },
+    "additions": [{ "el": "circle|ellipse|rect|path|polygon|polyline|line", "fill": "#hex", "stroke": "#hex" }],
+    "movement": "waddle|bounce|drift|hop if changed"
   },
   "world_events": [
     { "type": "shake", "intensity": number },
@@ -166,10 +167,11 @@ Output schema:
 }
 
 creature_spec_mutation 규칙:
-- 진화로 외형이 어떻게 변하는지 반영
+- 진화로 외형이 어떻게 변하는지 반영. 모든 필드는 선택적 — 변경된 것만 포함.
 - body color 변경은 거의 항상 포함
-- 극적인 진화 시 눈/입 variant도 변경
-- 부모 CreatureSpec의 일부만 변경 (전체 덮어쓰기 아님)
+- 극적인 진화 시: shape 변경 (blob→roundRect), 크기 변경 (width/height), 눈 개수 증가, 입 variant 변경
+- additions로 촉수/가시/날개 등 SVG 요소 추가 가능 (circle, path, polygon 등)
+- 부모의 현재 creature_spec이 아래에 제공됨 — 이를 기반으로 자연스럽게 변형할 것
 
 규칙:
 - tradeoff 최소 1개 필수. 무조건 좋아지기만 하면 안 됨.
@@ -235,9 +237,11 @@ Output schema:
   },
   "fusion_line": "합성을 한 줄로 요약. 담담하게.",
   "creature_spec_mutation": {
-    "body": { "color": "new hex color reflecting fusion" },
-    "eyes": { "variant": "changed if fusion affects perception" },
-    "movement": "changed if fusion affects mobility"
+    "body": { "shape": "optional", "width": "optional int", "height": "optional int", "color": "new hex reflecting fusion", "stroke": "optional" },
+    "eyes": { "variant": "optional", "size": "optional int", "spacing": "optional int", "offsetY": "optional int", "count": "optional int" },
+    "mouth": { "variant": "optional", "width": "optional int", "offsetY": "optional int" },
+    "additions": [{ "el": "circle|ellipse|rect|path|polygon|polyline|line", "fill": "#hex", "stroke": "#hex" }],
+    "movement": "waddle|bounce|drift|hop if changed"
   },
   "world_events": [
     { "type": "shake", "intensity": number },
@@ -290,6 +294,9 @@ export function buildEvolutionUserPrompt(creature: Creature, environment: Enviro
     `에너지 전략: ${creature.energyStrategy ?? '광합성'}`,
     `스탯: HP ${creature.stats.hp}, 적응력 ${creature.stats.adaptability}, 회복력 ${creature.stats.resilience}, 구조 ${creature.stats.structure}`,
     '',
+    `현재 외형 (creature_spec):`,
+    JSON.stringify(creature.creatureSpec, null, 2),
+    '',
     `환경: ${environment.eventName}`,
     `원인: ${environment.cascadingCause}`,
     `8축 변수: ${JSON.stringify(environment.envVariables)}`,
@@ -334,6 +341,9 @@ export function buildSynthesisUserPrompt(
     `에너지 전략: ${creature.energyStrategy ?? '광합성'}`,
     `스탯: HP ${creature.stats.hp}, 적응력 ${creature.stats.adaptability}, 회복력 ${creature.stats.resilience}, 구조 ${creature.stats.structure}`,
     `세대: ${creature.generation ?? 1}`,
+    '',
+    `현재 외형 (creature_spec):`,
+    JSON.stringify(creature.creatureSpec, null, 2),
     '',
     `시련 생존 결과: ${trialResult.damageOrMutation}`,
   ];

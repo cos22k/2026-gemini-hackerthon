@@ -1,40 +1,69 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
-import './styles/global.css';
-import './styles/intro.css';
-import './styles/stage.css';
-import './styles/modal.css';
-import './styles/components.css';
-import './styles/world.css';
-import './styles/effects.css';
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Routes, Route } from "react-router-dom";
+import "./styles/global.css";
+import "./styles/intro.css";
+import "./styles/stage.css";
+import "./styles/modal.css";
+import "./styles/components.css";
+import "./styles/world.css";
+import "./styles/effects.css";
 
-import type { Creature, Environment, EvolutionResult, TrialResult, HistoryEvent, ActionButton } from './types';
-import { generateCreature, generateEnvironment, generateEvolution, generateTrial, generateSynthesis } from './api/gemini';
-import { getChaosLevel } from './game/environment';
-import { executeWorldEvents } from './game/worldEventExecutor';
-import { useAuth } from './lib/auth';
-import { createSession, saveGameEvent } from './game/firestorePersistence';
-import IntroScreen from './components/IntroScreen';
-import MainStage from './components/MainStage';
-import HistoryPanel from './components/HistoryPanel';
-import SynthesisView from './components/SynthesisView';
-import EpilogueView from './components/EpilogueView';
-import SandboxPage from './pages/SandboxPage';
-import type { WorldSceneHandle } from './world/WorldScene';
+import type {
+  Creature,
+  Environment,
+  EvolutionResult,
+  TrialResult,
+  HistoryEvent,
+  ActionButton,
+} from "./types";
+import type { CreatureSpec } from "./world/types";
+import {
+  generateCreature,
+  generateEnvironment,
+  generateEvolution,
+  generateTrial,
+  generateSynthesis,
+} from "./api/gemini";
+import { getChaosLevel } from "./game/environment";
+import { executeWorldEvents } from "./game/worldEventExecutor";
+import { normalizeCreatureSpec } from "./api/schemas";
+import { useAuth } from "./lib/auth";
+import { createSession, saveGameEvent } from "./game/firestorePersistence";
 
+function mergeCreatureSpec(
+  current: CreatureSpec | undefined,
+  mutation?: Partial<CreatureSpec>,
+): CreatureSpec {
+  const base = current ?? normalizeCreatureSpec(undefined);
+  if (!mutation) return base;
+  return normalizeCreatureSpec({
+    body: { ...base.body, ...mutation.body },
+    eyes: { ...base.eyes, ...mutation.eyes },
+    mouth: { ...base.mouth, ...mutation.mouth },
+    additions: mutation.additions ?? base.additions,
+    movement: mutation.movement ?? base.movement,
+  } as Record<string, unknown>);
+}
+import IntroScreen from "./components/IntroScreen";
+import MainStage from "./components/MainStage";
+import HistoryPanel from "./components/HistoryPanel";
+import SynthesisView from "./components/SynthesisView";
+import EpilogueView from "./components/EpilogueView";
+import SandboxPage from "./pages/SandboxPage";
+import type { WorldSceneHandle } from "./world/WorldScene";
 
 function GamePage() {
   const { uid } = useAuth();
   const worldRef = useRef<WorldSceneHandle>(null);
   const envTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [phase, setPhase] = useState('intro');
+  const [phase, setPhase] = useState("intro");
   const [creature, setCreature] = useState<Creature | null>(null);
   const [environment, setEnvironment] = useState<Environment | null>(null);
   const [evolution, setEvolution] = useState<EvolutionResult | null>(null);
   const [trial, setTrial] = useState<TrialResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState('');
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [history, setHistory] = useState<HistoryEvent[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [round, setRound] = useState(1);
@@ -48,10 +77,20 @@ function GamePage() {
 
   const dispatchWorldEvents = async (events?: unknown[]) => {
     if (!events || !Array.isArray(events) || !worldRef.current) return;
-    const validTypes = ['addBody', 'removeBody', 'setGravity', 'setWind', 'applyForce', 'shake', 'clear'];
+    const validTypes = [
+      "addBody",
+      "removeBody",
+      "setGravity",
+      "setWind",
+      "applyForce",
+      "shake",
+      "clear",
+    ];
     const cmds = events.filter(
-      (e): e is import('./world/types').PhysicsCommand =>
-        typeof e === 'object' && e !== null && validTypes.includes((e as Record<string, unknown>).type as string),
+      (e): e is import("./world/types").PhysicsCommand =>
+        typeof e === "object" &&
+        e !== null &&
+        validTypes.includes((e as Record<string, unknown>).type as string),
     );
     if (cmds.length > 0) {
       await executeWorldEvents(worldRef.current.dispatch, cmds);
@@ -67,11 +106,15 @@ function GamePage() {
   // Start environment phase with auto-timer
   const startEnvironmentPhase = useCallback((env: Environment) => {
     setEnvironment(env);
-    const envEvent: HistoryEvent = { type: 'environment', title: env.eventName, summary: `불안정 지수 ${env.instabilityIndex}` };
+    const envEvent: HistoryEvent = {
+      type: "environment",
+      title: env.eventName,
+      summary: `불안정 지수 ${env.instabilityIndex}`,
+    };
     setHistory((prev) => [...prev, envEvent]);
     persistEvent(envEvent);
     setLoading(false);
-    setPhase('environment');
+    setPhase("environment");
     dispatchWorldEvents(env.worldEvents);
 
     // Auto-proceed after AI-decided duration
@@ -79,13 +122,13 @@ function GamePage() {
     envTimerRef.current = setTimeout(() => {
       handleProceedFromEnvironment();
     }, env.durationSeconds * 1000);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleStart = async (k1: string, k2: string) => {
-    setPhase('birth');
+    setPhase("birth");
     setLoading(true);
-    setLoadingMessage('생명의 씨앗을 심는 중...');
+    setLoadingMessage("생명의 씨앗을 심는 중...");
     setHistory([]);
     setEvolution(null);
     setTrial(null);
@@ -99,25 +142,32 @@ function GamePage() {
     }
 
     const newCreature = await generateCreature(k1, k2);
-    console.log('[Creature]', newCreature);
+    console.log("[Creature]", newCreature);
 
     if (!newCreature) {
       setLoading(false);
-      setLoadingMessage('');
+      setLoadingMessage("");
       return;
     }
 
     setCreature(newCreature);
-    const birthEvent: HistoryEvent = { type: 'birth', title: '탄생', summary: `${newCreature.name} — ${k1} × ${k2}` };
+    const birthEvent: HistoryEvent = {
+      type: "birth",
+      title: "탄생",
+      summary: `${newCreature.name} — ${k1} × ${k2}`,
+    };
     setHistory([birthEvent]);
     persistEvent(birthEvent);
 
     // Show creature on stage (no loading overlay), generate env in background
     setLoading(false);
-    setPhase('birth');
+    setPhase("birth");
 
-    const env = await generateEnvironment(newCreature, getChaosLevel(newCreature.generation ?? 1));
-    console.log('[Environment]', env);
+    const env = await generateEnvironment(
+      newCreature,
+      getChaosLevel(newCreature.generation ?? 1),
+    );
+    console.log("[Environment]", env);
 
     if (env) {
       startEnvironmentPhase(env);
@@ -131,7 +181,7 @@ function GamePage() {
       envTimerRef.current = null;
     }
 
-    setPhase('evolving');
+    setPhase("evolving");
     // No loading overlay — show evolving visual effect instead
 
     // We need the latest creature and environment
@@ -140,14 +190,14 @@ function GamePage() {
     if (!currentCreature || !currentEnvironment) return;
 
     const evo = await generateEvolution(currentCreature, currentEnvironment);
-    console.log('[Evolution]', evo);
+    console.log("[Evolution]", evo);
 
     if (!evo) return;
 
     setEvolution(evo);
     await dispatchWorldEvents(evo.worldEvents);
 
-    // Update creature with evolved stats
+    // Update creature with evolved stats and visual mutation
     const evolvedCreature: Creature = {
       ...currentCreature,
       name: evo.newName,
@@ -157,30 +207,51 @@ function GamePage() {
       ],
       stats: {
         hp: Math.max(1, currentCreature.stats.hp + evo.statChanges.hp),
-        adaptability: Math.max(0, currentCreature.stats.adaptability + evo.statChanges.adaptability),
-        resilience: Math.max(0, currentCreature.stats.resilience + evo.statChanges.resilience),
-        structure: Math.max(0, currentCreature.stats.structure + evo.statChanges.structure),
+        adaptability: Math.max(
+          0,
+          currentCreature.stats.adaptability + evo.statChanges.adaptability,
+        ),
+        resilience: Math.max(
+          0,
+          currentCreature.stats.resilience + evo.statChanges.resilience,
+        ),
+        structure: Math.max(
+          0,
+          currentCreature.stats.structure + evo.statChanges.structure,
+        ),
       },
+      creatureSpec: mergeCreatureSpec(
+        creature?.creatureSpec,
+        evo.creatureSpecMutation,
+      ),
     };
     setCreature(evolvedCreature);
 
-    const evoEvent: HistoryEvent = { type: 'evolution', title: evo.newName, summary: evo.poeticLine };
+    const evoEvent: HistoryEvent = {
+      type: "evolution",
+      title: evo.newName,
+      summary: evo.poeticLine,
+    };
     setHistory((prev) => [...prev, evoEvent]);
     persistEvent(evoEvent);
 
     // Auto-proceed to trial after showing evolution results
     setTimeout(async () => {
       setLoading(true);
-      setLoadingMessage('시련이 다가오고 있습니다...');
+      setLoadingMessage("시련이 다가오고 있습니다...");
 
-      const trialResult = await generateTrial(evolvedCreature, currentEnvironment, getChaosLevel(evolvedCreature.generation ?? round));
-      console.log('[Trial]', trialResult);
+      const trialResult = await generateTrial(
+        evolvedCreature,
+        currentEnvironment,
+        getChaosLevel(evolvedCreature.generation ?? round),
+      );
+      console.log("[Trial]", trialResult);
 
       if (trialResult) {
         setTrial(trialResult);
         await dispatchWorldEvents(trialResult.worldEvents);
         const trialEvent: HistoryEvent = {
-          type: 'trial',
+          type: "trial",
           title: trialResult.trialName,
           summary: trialResult.survived
             ? `생존 — 점수 ${trialResult.finalScore}`
@@ -189,12 +260,12 @@ function GamePage() {
         setHistory((prev) => [...prev, trialEvent]);
         persistEvent(trialEvent);
         setLoading(false);
-        setPhase(trialResult.survived ? 'synthesis' : 'epilogue');
+        setPhase(trialResult.survived ? "synthesis" : "epilogue");
       } else {
         setLoading(false);
       }
     }, 2000);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [round]);
 
   // Refs to access latest state in callbacks
@@ -207,10 +278,10 @@ function GamePage() {
     if (!creature || !trial) return;
 
     setLoading(true);
-    setLoadingMessage('새로운 물질과 합성하는 중...');
+    setLoadingMessage("새로운 물질과 합성하는 중...");
 
     const result = await generateSynthesis(creature, trial, keyword);
-    console.log('[Synthesis]', result);
+    console.log("[Synthesis]", result);
 
     if (result) {
       await dispatchWorldEvents(result.worldEvents);
@@ -223,15 +294,32 @@ function GamePage() {
         energyStrategy: result.energyStrategy,
         stats: {
           hp: Math.max(1, creature.stats.hp + result.statChanges.hp),
-          adaptability: Math.max(0, creature.stats.adaptability + result.statChanges.adaptability),
-          resilience: Math.max(0, creature.stats.resilience + result.statChanges.resilience),
-          structure: Math.max(0, creature.stats.structure + result.statChanges.structure),
+          adaptability: Math.max(
+            0,
+            creature.stats.adaptability + result.statChanges.adaptability,
+          ),
+          resilience: Math.max(
+            0,
+            creature.stats.resilience + result.statChanges.resilience,
+          ),
+          structure: Math.max(
+            0,
+            creature.stats.structure + result.statChanges.structure,
+          ),
         },
         generation: (creature.generation ?? 1) + 1,
+        creatureSpec: mergeCreatureSpec(
+          creature.creatureSpec,
+          result.creatureSpecMutation,
+        ),
       };
       setCreature(synthesizedCreature);
 
-      const synthEvent: HistoryEvent = { type: 'synthesis', title: `+${keyword}`, summary: result.fusionLine };
+      const synthEvent: HistoryEvent = {
+        type: "synthesis",
+        title: `+${keyword}`,
+        summary: result.fusionLine,
+      };
       setHistory((prev) => [...prev, synthEvent]);
       persistEvent(synthEvent);
 
@@ -241,11 +329,14 @@ function GamePage() {
       setTrial(null);
 
       // Show creature on stage while env generates
-      setPhase('birth');
+      setPhase("birth");
       setLoading(false);
 
-      const env = await generateEnvironment(synthesizedCreature, getChaosLevel((synthesizedCreature.generation ?? 1)));
-      console.log('[Environment R' + (round + 1) + ']', env);
+      const env = await generateEnvironment(
+        synthesizedCreature,
+        getChaosLevel(synthesizedCreature.generation ?? 1),
+      );
+      console.log("[Environment R" + (round + 1) + "]", env);
 
       if (env) {
         startEnvironmentPhase(env);
@@ -262,13 +353,19 @@ function GamePage() {
     setEvolution(null);
     setTrial(null);
 
-    const nextCreature = { ...creature, generation: (creature.generation ?? 1) + 1 };
+    const nextCreature = {
+      ...creature,
+      generation: (creature.generation ?? 1) + 1,
+    };
     setCreature(nextCreature);
 
     // Show creature on stage while env generates
-    setPhase('birth');
+    setPhase("birth");
 
-    const env = await generateEnvironment(nextCreature, getChaosLevel(nextCreature.generation ?? 1));
+    const env = await generateEnvironment(
+      nextCreature,
+      getChaosLevel(nextCreature.generation ?? 1),
+    );
     if (env) {
       startEnvironmentPhase(env);
     }
@@ -276,7 +373,7 @@ function GamePage() {
 
   const handleRestart = () => {
     if (envTimerRef.current) clearTimeout(envTimerRef.current);
-    setPhase('intro');
+    setPhase("intro");
     setCreature(null);
     setEnvironment(null);
     setEvolution(null);
@@ -286,22 +383,31 @@ function GamePage() {
     setRound(1);
   };
 
-  if (phase === 'intro') {
+  if (phase === "intro") {
     return <IntroScreen onStart={handleStart} />;
   }
 
   const actionButtons: ActionButton[] = [];
-  if (phase === 'epilogue') {
-    actionButtons.push({ label: '새로운 생명 창조', onClick: handleRestart, primary: true });
+  if (phase === "epilogue") {
+    actionButtons.push({
+      label: "새로운 생명 창조",
+      onClick: handleRestart,
+      primary: true,
+    });
   }
 
   return (
     <div className="game-layout">
       {/* SVG sketchy filter (used by world.css .physics-body) */}
-      <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+      <svg style={{ position: "absolute", width: 0, height: 0 }}>
         <defs>
           <filter id="sketchy">
-            <feTurbulence type="turbulence" baseFrequency="0.03" numOctaves="3" result="noise" />
+            <feTurbulence
+              type="turbulence"
+              baseFrequency="0.03"
+              numOctaves="3"
+              result="noise"
+            />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" />
           </filter>
         </defs>
@@ -309,8 +415,13 @@ function GamePage() {
 
       {loading && (
         <div className="modal-overlay">
-          <div className="modal" style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: 'var(--text-lg)', color: 'var(--text-secondary)' }}>
+          <div className="modal" style={{ textAlign: "center" }}>
+            <p
+              style={{
+                fontSize: "var(--text-lg)",
+                color: "var(--text-secondary)",
+              }}
+            >
               {loadingMessage}
             </p>
           </div>
@@ -328,7 +439,7 @@ function GamePage() {
         onProceed={handleProceedFromEnvironment}
         durationSeconds={environment?.durationSeconds}
       >
-        {phase === 'synthesis' && trial && creature && (
+        {phase === "synthesis" && trial && creature && (
           <SynthesisView
             creature={creature}
             trial={trial}
@@ -336,15 +447,16 @@ function GamePage() {
             onSkip={handleSkipSynthesis}
           />
         )}
-        {phase === 'epilogue' && trial && (
-          <EpilogueView trial={trial} creature={creature} onRestart={handleRestart} />
+        {phase === "epilogue" && trial && (
+          <EpilogueView
+            trial={trial}
+            creature={creature}
+            onRestart={handleRestart}
+          />
         )}
       </MainStage>
 
-      <HistoryPanel
-        history={history}
-        activeIndex={history.length - 1}
-      />
+      <HistoryPanel history={history} activeIndex={history.length - 1} />
     </div>
   );
 }

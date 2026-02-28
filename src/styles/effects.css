@@ -442,6 +442,111 @@
 }
 
 /* ═══════════════════════════════════════════════
+   Evolution Morph Transition (creature stays visible)
+   ═══════════════════════════════════════════════ */
+
+.evolution-morph {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  animation: morph-sequence 1.8s ease-out forwards;
+}
+
+/* Central ink splash */
+.evolution-morph::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(107, 74, 139, 0.18) 0%,
+    rgba(107, 74, 139, 0.06) 40%,
+    transparent 70%
+  );
+  transform: translate(-50%, -50%);
+  animation: morph-burst 1.2s ease-out forwards;
+}
+
+/* Sketchy ring expanding outward */
+.evolution-morph::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%);
+  border: 2px dashed rgba(107, 74, 139, 0.25);
+  border-radius: 50%;
+  animation: morph-ring 1.5s ease-out forwards;
+}
+
+@keyframes morph-burst {
+  0% { width: 0; height: 0; opacity: 0; }
+  20% { opacity: 1; }
+  100% { width: 600px; height: 600px; opacity: 0; }
+}
+
+@keyframes morph-ring {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  15% { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(3); }
+}
+
+@keyframes morph-sequence {
+  0% { opacity: 1; }
+  60% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════
+   Evolution Name Toast
+   ═══════════════════════════════════════════════ */
+
+.evolution-toast {
+  position: absolute;
+  bottom: var(--space-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-xl);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px dashed var(--accent-purple);
+  border-radius: var(--radius-lg);
+  animation: toast-appear 2s ease-out forwards;
+  pointer-events: none;
+}
+
+.evolution-toast__name {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--accent-purple);
+  font-family: var(--font-hand);
+}
+
+.evolution-toast__poetic {
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+@keyframes toast-appear {
+  0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-5px); }
+}
+
+/* ═══════════════════════════════════════════════
    Progress Timer Bar
    ═══════════════════════════════════════════════ */
 
