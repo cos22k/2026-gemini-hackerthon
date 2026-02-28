@@ -57,6 +57,7 @@ export const MOCK_ENVIRONMENT: Environment = {
     keyVisual: '심해 열수 분출',
   },
   playerAxes: { energy: 'HIGH', physical: 'HIGH', purity: 'LOW' },
+  durationSeconds: 5,
   worldEvents: [
     { type: 'setGravity', scale: 1.2 },
     { type: 'addBody', bodyType: 'stone', x: 200, y: 300 },

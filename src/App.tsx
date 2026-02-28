@@ -120,8 +120,8 @@ function GamePage() {
     // Auto-proceed after AI-decided duration
     if (envTimerRef.current) clearTimeout(envTimerRef.current);
     envTimerRef.current = setTimeout(() => {
-      handleProceedFromEnvironment();
-    }, env.durationSeconds * 1000);
+      proceedRef.current();
+    }, (env.durationSeconds ?? 10) * 1000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -273,6 +273,8 @@ function GamePage() {
   creatureRef.current = creature;
   const environmentRef = useRef(environment);
   environmentRef.current = environment;
+  const proceedRef = useRef(handleProceedFromEnvironment);
+  proceedRef.current = handleProceedFromEnvironment;
 
   const handleSynthesis = async (keyword: string) => {
     if (!creature || !trial) return;
