@@ -77,20 +77,25 @@ export interface Environment {
 export interface EvolutionResult {
   newName: string;
   evolutionSummary: string;
+  newTraits: string[];
+  lostTraits: string[];
   tradeoffs: string[];
+  adaptationScore: number;
   statChanges: Stats;
   poeticLine: string;
   imageUrl: string | null;
 }
 
 export interface TrialResult {
-  type: string;
-  title: string;
+  trialName: string;
+  trialDescription: string;
   narrative: string;
   survived: boolean;
   reason: string;
+  damageOrMutation: string;
   finalScore: number;
   epitaph: string;
+  synthesisHint?: string;
 }
 
 export interface HistoryEvent {

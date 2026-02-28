@@ -1,4 +1,4 @@
-import type { Environment, EnvVariables, VisualTone, Sensory } from '../types';
+import type { Creature, Environment, EnvVariables, VisualTone, Sensory, EvolutionResult, TrialResult } from '../types';
 import { convertToPlayerAxes } from '../game/environment';
 
 export function parseGeminiJSON<T>(text: string): T | null {
@@ -31,6 +31,27 @@ export async function callWithRetry<T>(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function mapCreatureResponse(raw: any): Creature {
+  return {
+    name: raw.name ?? '',
+    species: raw.species ?? '',
+    description: raw.description ?? '',
+    traits: raw.traits ?? [],
+    vulnerabilities: raw.vulnerabilities ?? [],
+    energyStrategy: raw.energy_strategy ?? '',
+    stats: {
+      hp: raw.stats?.hp ?? 100,
+      adaptability: raw.stats?.adaptability ?? 60,
+      resilience: raw.stats?.resilience ?? 50,
+      structure: raw.stats?.structure ?? 60,
+    },
+    imageUrl: null,
+    birthWords: raw.birth_words ?? '',
+    generation: 1,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function mapEnvironmentResponse(raw: any): Environment {
   const envVariables: EnvVariables = raw.env_variables;
   const visualTone: VisualTone = {
@@ -57,5 +78,40 @@ export function mapEnvironmentResponse(raw: any): Environment {
     hiddenOpportunity: raw.hidden_opportunity ?? '',
     visualTone,
     playerAxes: convertToPlayerAxes(envVariables),
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function mapEvolutionResponse(raw: any): EvolutionResult {
+  return {
+    newName: raw.new_name ?? '',
+    evolutionSummary: raw.evolution_summary ?? '',
+    newTraits: raw.new_traits ?? [],
+    lostTraits: raw.lost_traits ?? [],
+    tradeoffs: raw.tradeoffs ?? [],
+    adaptationScore: raw.adaptation_score ?? 50,
+    statChanges: {
+      hp: raw.stat_changes?.hp ?? 0,
+      adaptability: raw.stat_changes?.adaptability ?? 0,
+      resilience: raw.stat_changes?.resilience ?? 0,
+      structure: raw.stat_changes?.structure ?? 0,
+    },
+    poeticLine: raw.poetic_line ?? '',
+    imageUrl: null,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function mapTrialResponse(raw: any): TrialResult {
+  return {
+    trialName: raw.trial_name ?? '',
+    trialDescription: raw.trial_description ?? '',
+    survived: raw.survived ?? false,
+    narrative: raw.narrative ?? '',
+    reason: raw.reason ?? '',
+    damageOrMutation: raw.damage_or_mutation ?? '',
+    finalScore: raw.final_score ?? 0,
+    epitaph: raw.epitaph ?? '',
+    synthesisHint: raw.synthesis_hint,
   };
 }

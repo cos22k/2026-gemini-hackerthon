@@ -1,6 +1,35 @@
 import type { Creature, Environment } from '../types';
 
-export const CREATURE_SYSTEM_PROMPT = '';
+export const CREATURE_SYSTEM_PROMPT = `You are an evolutionary simulation engine.
+The user provides two keywords. Fuse them into a single fictional plant-like lifeform.
+Write in Korean. Respond ONLY with valid JSON, no markdown, no explanation.
+
+Output schema:
+{
+  "name": "한글 이름. 시적이고 독창적으로. 예: 페로-솔라리스, 동면의 하프",
+  "species": "라틴어풍 학명. 예: Ferro-solaris luminae",
+  "description": "과학 보고서 톤 3줄. 마지막 줄은 감성적 문장.",
+  "traits": ["능력1", "능력2", "능력3"],
+  "vulnerabilities": ["약점1", "약점2"],
+  "energy_strategy": "에너지 획득 방식 1줄",
+  "stats": {
+    "hp": 100,
+    "adaptability": 50~80 사이,
+    "resilience": 40~70 사이,
+    "structure": 30~90 사이
+  },
+  "birth_words": "탄생 순간의 독백 1~2줄. 1인칭. 감성적.",
+  "image_prompt": "이 생명체를 그리기 위한 영어 이미지 프롬프트. 구체적 외형 묘사."
+}
+
+규칙:
+- 능력 최대 3개
+- 약점 최소 1개 필수
+- 약점은 능력과 논리적으로 연결되어야 함 (강한 광합성 → 어둠에 취약)
+- 두 키워드의 물리적 속성뿐 아니라 상징적/문화적 의미도 융합하라
+- 이 생명체가 가진 근본적 딜레마를 약점에 반영하라
+  (예: 빛이 필요하지만 빛이 자신을 부식시킨다)
+- image_prompt는 영어로, "digital art, fantasy creature, botanical illustration" 스타일 키워드 포함`;
 
 export const ENVIRONMENT_SYSTEM_PROMPT = `You simulate extreme planetary environments for a fictional evolution game.
 
@@ -69,8 +98,68 @@ DIVERSITY GUIDANCE (직접 복사하지 말고 변형 활용):
 - 산성/부식: 녹아내리는 세계. "부식이 새로운 형태를 조각한다."
 - 독성 대기: 숨막히는 세계. "독이 에너지가 될 수 있는가."`;
 
-export const EVOLUTION_SYSTEM_PROMPT = '';
-export const TRIAL_SYSTEM_PROMPT = '';
+export const EVOLUTION_SYSTEM_PROMPT = `You are an evolution engine.
+Given a parent creature and an environment, generate its next evolutionary form.
+The creature adapts through pure natural selection — no external intervention.
+Evolution should be dramatic, unpredictable, and always involve a meaningful tradeoff.
+
+Write in Korean. Respond ONLY with valid JSON.
+
+Output schema:
+{
+  "new_name": "진화체 이름. 한글. 부모 이름과 연관되되 변형.",
+  "evolution_summary": "진화 과정 3~4줄. 과학적 톤. 마지막 문장은 감성적.",
+  "new_traits": ["새로 획득한 특성 1~2개"],
+  "lost_traits": ["잃어버린 특성 0~1개"],
+  "tradeoffs": ["'X를 얻었으나 Y를 잃었다' 형식. 최소 1개."],
+  "adaptation_score": 0~100,
+  "stat_changes": {
+    "hp": 변화량 정수,
+    "adaptability": 변화량 정수,
+    "resilience": 변화량 정수,
+    "structure": 변화량 정수
+  },
+  "poetic_line": "이 진화를 한 줄로 표현하는 시적 문장",
+  "image_prompt": "진화된 생명체의 영어 이미지 프롬프트. 부모와의 차이점 강조."
+}
+
+규칙:
+- tradeoff 최소 1개 필수. 무조건 좋아지기만 하면 안 됨.
+- lost_traits는 부모의 traits에서만 선택
+- hidden_opportunity를 적극 활용: 위협 자체를 에너지/능력으로 전환하는 진화가 가장 드라마틱
+- adaptation_score 편차 큼 (20~95). 자연은 예측 불가.
+- stat_changes의 합계가 0에 가깝도록 (무언가 오르면 무언가 내려야 함)
+- 부모의 어떤 흔적이 남아있는지 evolution_summary에 언급`;
+
+export const TRIAL_SYSTEM_PROMPT = `You judge whether a creature survives a trial.
+Analyze traits vs vulnerabilities with clear logical reasoning.
+The result should feel earned, not random.
+Write in Korean. Respond ONLY with valid JSON.
+
+Output schema:
+{
+  "trial_name": "시련 이름. 한글 2~4글자. 시적.",
+  "trial_description": "어떤 시련인지 1~2줄 묘사.",
+  "survived": true 또는 false,
+  "narrative": "시련 과정 3~4줄. 긴장감 있게. 결과를 마지막에 밝힐 것.",
+  "reason": "생존/실패의 구체적 이유 1~2줄.",
+  "damage_or_mutation": "생존 시: 시련으로 얻은 변이. 실패 시: 최후의 모습.",
+  "final_score": 0~100,
+  "epitaph": "이 시련의 결과를 한 줄로 요약. 감성적.",
+  "synthesis_hint": "생존 시에만. 다음 합성에서 어떤 종류의 물질이 도움이 될지 암시 1줄."
+}
+
+규칙:
+- traits가 시련에 직접 대응 → 생존 확률 높음
+- vulnerabilities가 시련에 직접 노출 → 실패 확률 높음
+- 낮은 스탯 (특히 HP, resilience) → 실패 확률 높음
+- 100% 예측 가능하면 안 됨. 의외의 특성이 의외의 방식으로 작동할 수 있음
+- 멸종 시에도 "마지막에 무엇을 남겼는가" 묘사 (포자, 종자, 신호 등)
+- synthesis_hint는 너무 직접적이지 않게, 은유적으로 (예: "더 유연한 무언가가 필요하다")`;
+
+export function buildCreatureUserPrompt(keyword1: string, keyword2: string): string {
+  return `키워드: "${keyword1}" + "${keyword2}"`;
+}
 
 export function buildEnvironmentUserPrompt(
   creature: Creature,
@@ -93,6 +182,46 @@ export function buildEnvironmentUserPrompt(
     lines.push(`이전 환경: ${prevEnv.eventName}`);
     lines.push(`이전 위협: ${prevEnv.threatDetail}`);
   }
+
+  return lines.join('\n');
+}
+
+export function buildEvolutionUserPrompt(creature: Creature, environment: Environment): string {
+  const lines = [
+    `부모: ${creature.name}`,
+    `특성: ${creature.traits.join(', ')}`,
+    `약점: ${creature.vulnerabilities.join(', ')}`,
+    `에너지 전략: ${creature.energyStrategy ?? '광합성'}`,
+    `스탯: HP ${creature.stats.hp}, 적응력 ${creature.stats.adaptability}, 회복력 ${creature.stats.resilience}, 구조 ${creature.stats.structure}`,
+    '',
+    `환경: ${environment.eventName}`,
+    `원인: ${environment.cascadingCause}`,
+    `8축 변수: ${JSON.stringify(environment.envVariables)}`,
+    `위협: ${environment.threatDetail}`,
+    `숨겨진 기회: ${environment.hiddenOpportunity}`,
+  ];
+
+  return lines.join('\n');
+}
+
+export function buildTrialUserPrompt(
+  creature: Creature,
+  environment: Environment,
+  chaosLevel: number,
+): string {
+  const lines = [
+    `생명체: ${creature.name}`,
+    `특성: ${creature.traits.join(', ')}`,
+    `약점: ${creature.vulnerabilities.join(', ')}`,
+    `에너지 전략: ${creature.energyStrategy ?? '광합성'}`,
+    `스탯: HP ${creature.stats.hp}, 적응력 ${creature.stats.adaptability}, 회복력 ${creature.stats.resilience}, 구조 ${creature.stats.structure}`,
+    `세대: ${creature.generation ?? 1}`,
+    '',
+    `이전 환경: ${environment.eventName}`,
+    `환경 위협: ${environment.threatDetail}`,
+    '',
+    `chaos_level: ${chaosLevel}`,
+  ];
 
   return lines.join('\n');
 }

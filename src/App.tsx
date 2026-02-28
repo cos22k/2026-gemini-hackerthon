@@ -6,71 +6,53 @@ import './styles/modal.css';
 import './styles/components.css';
 
 import type { Creature, Environment, EvolutionResult, TrialResult, HistoryEvent, ActionButton } from './types';
-import { generateEnvironment } from './api/gemini';
+import { generateCreature, generateEnvironment, generateEvolution, generateTrial } from './api/gemini';
 import { getChaosLevel } from './game/environment';
 import IntroScreen from './components/IntroScreen';
 import MainStage from './components/MainStage';
 import HistoryPanel from './components/HistoryPanel';
 import ChoiceModal from './components/ChoiceModal';
 
-// Mock creature for testing environment API
-const MOCK_CREATURE: Creature = {
-  name: '페로-솔라리스',
-  species: 'Ferro-solaris rosaeum',
-  description:
-    '금속성 세포벽을 가진 광합성 생명체. 철 이온을 흡수하여 꽃잎 형태의 태양광 수집판을 형성한다. 어둠 속에서도 빛을 기억하는 존재.',
-  traits: ['금속 세포벽', '자기장 감응', '전자기파 소통'],
-  vulnerabilities: ['산성 환경 부식', '고온 구조 붕괴'],
-  energyStrategy: '철 이온 기반 광합성',
-  stats: { hp: 100, adaptability: 55, resilience: 65, structure: 80 },
-  imageUrl: null,
-  birthWords: '차가운 금속 사이로 처음 빛이 들어왔을 때, 나는 그것이 따뜻하다는 것을 알았습니다.',
-  generation: 1,
-};
-
-const MOCK_NATURAL: EvolutionResult = {
-  newName: '페로-솔라리스 점액종',
-  evolutionSummary:
-    '산성 안개에 노출된 페로-솔라리스는 금속 세포벽 위에 점액질 보호막을 분비하기 시작했다. 빛을 포기한 날, 그것은 처음으로 어둠 속에서 웃었다.',
-  tradeoffs: ['산성 내성을 얻었으나 광합성 효율 60% 감소'],
-  statChanges: { hp: 90, adaptability: 70, resilience: 75, structure: 65 },
-  poeticLine: '빛을 포기한 자만이 어둠에서 살아남는다.',
-  imageUrl: null,
-};
-
-const MOCK_TRIAL: TrialResult = {
-  type: '시련',
-  title: '산성비',
-  narrative:
-    '하늘이 노랗게 물들더니 pH 2.1의 강산성 비가 쏟아지기 시작했다. 점액 보호막이 첫 번째 파도를 막아냈지만, 지속적인 강하에 점액이 희석되기 시작했다.',
-  survived: true,
-  reason:
-    '점액 보호막이 1차 방어를 수행했고, 부식된 금속 이온이 토양과 반응하여 2차 중화층을 만들었다.',
-  finalScore: 72,
-  epitaph: '상처가 갑옷이 되는 데는 시간이 필요하다.',
-};
-
 function App() {
   const [phase, setPhase] = useState('intro');
   const [showModal, setShowModal] = useState(false);
+  const [creature, setCreature] = useState<Creature | null>(null);
   const [environment, setEnvironment] = useState<Environment | null>(null);
+  const [evolution, setEvolution] = useState<EvolutionResult | null>(null);
+  const [trial, setTrial] = useState<TrialResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [history, setHistory] = useState<HistoryEvent[]>([]);
 
-  const creature = MOCK_CREATURE;
-  const chaosLevel = getChaosLevel(creature.generation ?? 1);
+  const chaosLevel = getChaosLevel(creature?.generation ?? 1);
 
-  const handleStart = (_k1: string, _k2: string) => {
+  const handleStart = async (k1: string, k2: string) => {
+    // 1. Generate creature
     setPhase('birth');
-    setHistory([{ type: 'birth', title: '탄생', summary: `${creature.name} — 금속 × 장미` }]);
-  };
-
-  const handleNextFromBirth = async () => {
     setLoading(true);
-    setLoadingMessage('환경이 변화하고 있습니다...');
+    setLoadingMessage('생명의 씨앗을 심는 중...');
+    setHistory([]);
+    setEvolution(null);
+    setTrial(null);
+    setEnvironment(null);
 
-    const env = await generateEnvironment(creature, chaosLevel);
+    const newCreature = await generateCreature(k1, k2);
+    console.log('[Creature]', newCreature);
+
+    if (!newCreature) {
+      console.error('Creature generation failed');
+      setLoading(false);
+      setLoadingMessage('');
+      return;
+    }
+
+    setCreature(newCreature);
+    setHistory([{ type: 'birth', title: '탄생', summary: `${newCreature.name} — ${k1} × ${k2}` }]);
+
+    // 2. Generate environment
+    setLoadingMessage('환경이 변화하고 있습니다...');
+    const env = await generateEnvironment(newCreature, getChaosLevel(newCreature.generation ?? 1));
+    console.log('[Environment]', env);
 
     if (env) {
       setEnvironment(env);
@@ -78,37 +60,96 @@ function App() {
         ...prev,
         { type: 'environment', title: env.eventName, summary: `불안정 지수 ${env.instabilityIndex}` },
       ]);
-      console.log('[Environment]', env);
+      setLoading(false);
+      setPhase('environment');
+      setShowModal(true);
     } else {
       console.error('Environment generation failed');
+      setLoading(false);
+      setLoadingMessage('');
+    }
+  };
+
+  const handleProceedFromEnvironment = async () => {
+    if (!creature || !environment) return;
+
+    setShowModal(false);
+    setPhase('evolving');
+    setLoading(true);
+    setLoadingMessage('진화가 진행되고 있습니다...');
+
+    // 3. Generate evolution
+    const evo = await generateEvolution(creature, environment);
+    console.log('[Evolution]', evo);
+
+    if (!evo) {
+      console.error('Evolution generation failed');
+      setLoading(false);
+      return;
     }
 
+    setEvolution(evo);
+
+    // Update creature with evolved stats
+    const evolvedCreature: Creature = {
+      ...creature,
+      name: evo.newName,
+      traits: [
+        ...creature.traits.filter((t) => !evo.lostTraits.includes(t)),
+        ...evo.newTraits,
+      ],
+      stats: {
+        hp: Math.max(1, creature.stats.hp + evo.statChanges.hp),
+        adaptability: Math.max(0, creature.stats.adaptability + evo.statChanges.adaptability),
+        resilience: Math.max(0, creature.stats.resilience + evo.statChanges.resilience),
+        structure: Math.max(0, creature.stats.structure + evo.statChanges.structure),
+      },
+    };
+    setCreature(evolvedCreature);
+
+    setHistory((prev) => [
+      ...prev,
+      { type: 'evolution', title: evo.newName, summary: evo.poeticLine },
+    ]);
     setLoading(false);
-    setPhase('environment');
-    setShowModal(true);
-  };
 
-  const handleProceedFromEnvironment = () => {
-    setShowModal(false);
-    setPhase('comparison');
-    setHistory((prev) => [
-      ...prev,
-      { type: 'evolution', title: '진화 분기', summary: '자동 진화 진행' },
-    ]);
-  };
+    // Auto-proceed to trial after a brief moment
+    setTimeout(async () => {
+      setLoading(true);
+      setLoadingMessage('시련이 다가오고 있습니다...');
 
-  const handleChoosePath = () => {
-    setPhase('trial');
-    setHistory((prev) => [
-      ...prev,
-      { type: 'trial', title: MOCK_TRIAL.title, summary: `생존 — 점수 ${MOCK_TRIAL.finalScore}` },
-    ]);
+      // 4. Generate trial
+      const trialResult = await generateTrial(evolvedCreature, environment, chaosLevel);
+      console.log('[Trial]', trialResult);
+
+      if (trialResult) {
+        setTrial(trialResult);
+        setHistory((prev) => [
+          ...prev,
+          {
+            type: 'trial',
+            title: trialResult.trialName,
+            summary: trialResult.survived
+              ? `생존 — 점수 ${trialResult.finalScore}`
+              : `멸종 — 점수 ${trialResult.finalScore}`,
+          },
+        ]);
+        setLoading(false);
+        setPhase('trial');
+      } else {
+        console.error('Trial generation failed');
+        setLoading(false);
+      }
+    }, 2000);
   };
 
   const handleRestart = () => {
     setPhase('intro');
     setShowModal(false);
+    setCreature(null);
     setEnvironment(null);
+    setEvolution(null);
+    setTrial(null);
     setHistory([]);
   };
 
@@ -119,9 +160,6 @@ function App() {
 
   // Build action buttons based on phase
   const actionButtons: ActionButton[] = [];
-  if (phase === 'birth') {
-    actionButtons.push({ label: '다음 단계 →', onClick: handleNextFromBirth, primary: true });
-  }
   if (phase === 'trial') {
     actionButtons.push({ label: '새로운 생명 창조', onClick: handleRestart, primary: true });
   }
@@ -140,12 +178,10 @@ function App() {
 
       <MainStage
         phase={phase}
-        creature={creature}
-        natural={MOCK_NATURAL}
-        trial={MOCK_TRIAL}
+        creature={creature ?? undefined}
+        evolution={evolution ?? undefined}
+        trial={trial ?? undefined}
         actionButtons={actionButtons}
-        onChooseNatural={handleChoosePath}
-        onChooseIntervened={handleChoosePath}
       />
       <HistoryPanel
         history={history}
