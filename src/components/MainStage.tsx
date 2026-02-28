@@ -1,5 +1,6 @@
+import type { RefObject, ReactNode } from 'react';
 import type { Creature, EvolutionResult, TrialResult, ActionButton } from '../types';
-import CreatureCard from './CreatureCard';
+import { WorldScene, type WorldSceneHandle } from '../world/WorldScene';
 import TrialView from './TrialView';
 import ActionButtons from './ActionButtons';
 
@@ -9,6 +10,8 @@ interface MainStageProps {
   evolution?: EvolutionResult;
   trial?: TrialResult;
   actionButtons?: ActionButton[];
+  worldRef?: RefObject<WorldSceneHandle | null>;
+  children?: ReactNode;
 }
 
 export default function MainStage({
@@ -17,12 +20,14 @@ export default function MainStage({
   evolution,
   trial,
   actionButtons,
+  worldRef,
+  children,
 }: MainStageProps) {
   const bgClass =
     phase === 'birth' ? 'stage__background--birth' :
     phase === 'environment' ? 'stage__background--environment' :
     phase === 'evolving' ? 'stage__background--evolution' :
-    phase === 'trial' ? 'stage__background--trial' :
+    phase === 'trial' || phase === 'synthesis' || phase === 'epilogue' ? 'stage__background--trial' :
     'stage__background--birth';
 
   return (
@@ -40,13 +45,19 @@ export default function MainStage({
             </div>
             <p className="evolution__poetic">"{evolution.poeticLine}"</p>
           </div>
-        ) : phase === 'trial' ? (
-          trial && <TrialView trial={trial} />
+        ) : phase === 'trial' && trial ? (
+          <TrialView trial={trial} />
+        ) : phase === 'synthesis' || phase === 'epilogue' ? (
+          children
         ) : (
           creature && (
             <>
               <div className="stage__creature-area">
-                <CreatureCard creature={creature} />
+                <WorldScene
+                  ref={worldRef}
+                  weather="none"
+                  creatureSpec={creature.creatureSpec}
+                />
               </div>
               {phase === 'birth' && creature.birthWords && (
                 <p className="stage__birth-words">"{creature.birthWords}"</p>

@@ -1,5 +1,8 @@
 import type { Creature, Environment, EnvVariables, VisualTone, Sensory, EvolutionResult, TrialResult } from '../types';
+import type { PhysicsCommand } from '../world/types';
+import type { SynthesisResult } from '../game/types';
 import { convertToPlayerAxes } from '../game/environment';
+import { normalizeCreatureSpec } from './gemini';
 
 export function parseGeminiJSON<T>(text: string): T | null {
   try {
@@ -48,6 +51,7 @@ export function mapCreatureResponse(raw: any): Creature {
     imageUrl: null,
     birthWords: raw.birth_words ?? '',
     generation: 1,
+    creatureSpec: normalizeCreatureSpec(raw.creature_spec),
   };
 }
 
@@ -78,6 +82,7 @@ export function mapEnvironmentResponse(raw: any): Environment {
     hiddenOpportunity: raw.hidden_opportunity ?? '',
     visualTone,
     playerAxes: convertToPlayerAxes(envVariables),
+    worldEvents: normalizeWorldEvents(raw.world_events),
   };
 }
 
@@ -98,6 +103,8 @@ export function mapEvolutionResponse(raw: any): EvolutionResult {
     },
     poeticLine: raw.poetic_line ?? '',
     imageUrl: null,
+    creatureSpecMutation: raw.creature_spec_mutation ?? {},
+    worldEvents: normalizeWorldEvents(raw.world_events),
   };
 }
 
@@ -113,5 +120,34 @@ export function mapTrialResponse(raw: any): TrialResult {
     finalScore: raw.final_score ?? 0,
     epitaph: raw.epitaph ?? '',
     synthesisHint: raw.synthesis_hint,
+    worldEvents: normalizeWorldEvents(raw.world_events),
   };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function mapSynthesisResponse(raw: any): SynthesisResult {
+  return {
+    newName: raw.new_name ?? '',
+    fusionNarrative: raw.fusion_narrative ?? '',
+    newTraits: raw.new_traits ?? [],
+    modifiedVulnerabilities: raw.modified_vulnerabilities ?? [],
+    energyStrategy: raw.energy_strategy ?? '',
+    statChanges: {
+      hp: raw.stat_changes?.hp ?? 0,
+      adaptability: raw.stat_changes?.adaptability ?? 0,
+      resilience: raw.stat_changes?.resilience ?? 0,
+      structure: raw.stat_changes?.structure ?? 0,
+    },
+    fusionLine: raw.fusion_line ?? '',
+    creatureSpecMutation: raw.creature_spec_mutation ?? {},
+    worldEvents: normalizeWorldEvents(raw.world_events),
+  };
+}
+
+function normalizeWorldEvents(events: unknown[] | undefined): PhysicsCommand[] {
+  if (!Array.isArray(events)) return [];
+  const validTypes = ['addBody', 'removeBody', 'setGravity', 'setWind', 'applyForce', 'shake', 'clear'];
+  return events.filter((e): e is PhysicsCommand =>
+    typeof e === 'object' && e !== null && validTypes.includes((e as Record<string, unknown>).type as string),
+  );
 }

@@ -338,3 +338,219 @@
   width: 200px;
   height: 200px;
 }
+
+/* === Evolution View === */
+.evolution {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  text-align: center;
+  height: 100%;
+}
+
+.evolution__name {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.evolution__summary {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  max-width: 500px;
+  line-height: 1.8;
+}
+
+.evolution__tradeoffs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.evolution__tradeoff {
+  font-size: var(--text-sm);
+  color: var(--accent-amber);
+}
+
+.evolution__poetic {
+  font-style: italic;
+  font-size: var(--text-lg);
+  color: var(--text-muted);
+}
+
+/* === Synthesis View === */
+.synthesis {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  text-align: center;
+  height: 100%;
+}
+
+.synthesis__header {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.synthesis__subtitle {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+}
+
+.synthesis__creature-info {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.synthesis__hint {
+  font-style: italic;
+  font-size: var(--text-sm);
+  color: var(--accent-amber);
+  max-width: 400px;
+}
+
+.synthesis__input-area {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.synthesis__input {
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  font-family: var(--font-sans);
+  min-width: 240px;
+}
+
+.synthesis__input:focus {
+  outline: none;
+  border-color: var(--accent-green);
+}
+
+.synthesis__btn {
+  padding: var(--space-sm) var(--space-xl);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-sans);
+}
+
+.synthesis__btn--primary {
+  background: linear-gradient(135deg, var(--accent-green-dim), #1a3a2a);
+  border: 1px solid var(--accent-green);
+  color: var(--accent-green);
+}
+
+.synthesis__btn--primary:hover:not(:disabled) {
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.15);
+}
+
+.synthesis__btn--primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.synthesis__btn--secondary {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+}
+
+.synthesis__btn--secondary:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-secondary);
+}
+
+.synthesis__divider {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* === Epilogue View === */
+.epilogue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  text-align: center;
+  height: 100%;
+}
+
+.epilogue__header {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  color: var(--accent-red);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.epilogue__creature-name {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+}
+
+.epilogue__narrative {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  max-width: 500px;
+  line-height: 1.8;
+}
+
+.epilogue__reason {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  max-width: 400px;
+}
+
+.epilogue__score {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.epilogue__epitaph {
+  font-style: italic;
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+}
+
+.epilogue__mutation {
+  font-size: var(--text-sm);
+  color: var(--accent-amber);
+  max-width: 400px;
+}
+
+.epilogue__btn {
+  margin-top: var(--space-lg);
+  padding: var(--space-md) var(--space-xl);
+  background: linear-gradient(135deg, var(--accent-green-dim), #1a3a2a);
+  border: 1px solid var(--accent-green);
+  border-radius: var(--radius-md);
+  color: var(--accent-green);
+  font-size: var(--text-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-sans);
+}
+
+.epilogue__btn:hover {
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.15);
+}

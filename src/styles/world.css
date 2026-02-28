@@ -1,0 +1,371 @@
+/* ═══════════════════════════════════════════════
+   World Scene — Planet, Physics, Weather, Creature
+   Dark-adapted for Terrarium Echo (--bg-primary: #0a0a0f)
+   ═══════════════════════════════════════════════ */
+
+/* ── World canvas ─────────────────────────────── */
+.world-canvas {
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Creature positioned by physics engine via inline styles */
+.world-creature {
+  position: absolute;
+  z-index: 5;
+}
+
+/* ── Planet (Little Prince style) ─────────────── */
+.planet-wrap {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── Physics bodies ────────────────────────────── */
+.physics-body {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  will-change: transform;
+  filter: url(#sketchy);
+}
+
+/* ── Weather: Sun (ink doodle, dark-adapted) ───── */
+.weather-sun {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 100px;
+  height: 100px;
+  z-index: 10;
+  animation: sun-rotate 30s linear infinite;
+}
+
+.sun-orb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border: 2.5px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.sun-ray {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 2px;
+  margin-top: -1px;
+  background: rgba(255, 255, 255, 0.4);
+  transform-origin: 0 50%;
+  border-radius: 1px;
+}
+
+@keyframes sun-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Weather: Snowfall (light dots on dark bg) ─── */
+.weather-snow {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.snowflake {
+  position: absolute;
+  top: -8px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  opacity: 0.7;
+  animation: snowfall linear infinite;
+}
+
+@keyframes snowfall {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(320px) translateX(15px);
+  }
+  100% {
+    transform: translateY(650px) translateX(-6px);
+    opacity: 0.15;
+  }
+}
+
+/* ── Weather: Rainfall (light streaks on dark bg) ─ */
+.weather-rain {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.raindrop {
+  position: absolute;
+  top: -20px;
+  width: 1.5px;
+  height: 14px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.35));
+  border-radius: 0 0 1px 1px;
+  animation: rainfall linear infinite;
+}
+
+@keyframes rainfall {
+  0% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(660px);
+    opacity: 0.1;
+  }
+}
+
+/* ── Movement animations ───────────────────────── */
+.movement-waddle {
+  animation: waddle 1s ease-in-out infinite;
+}
+
+.movement-bounce {
+  animation: bounce 0.6s ease-in-out infinite;
+}
+
+.movement-drift {
+  animation: drift 3s ease-in-out infinite;
+}
+
+.movement-hop {
+  animation: hop 0.8s ease-in-out infinite;
+}
+
+@keyframes waddle {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-5deg); }
+  75%      { transform: rotate(5deg); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+@keyframes drift {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(10px); }
+}
+
+@keyframes hop {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  30%      { transform: translateY(-15px) scaleY(1.05); }
+  50%      { transform: translateY(0) scaleY(0.95); }
+  65%      { transform: translateY(-3px) scaleY(1); }
+}
+
+/* ── Googly pupil bounce ───────────────────────── */
+@keyframes pupil-bounce {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20%      { transform: translate(2px, -1.5px) rotate(8deg); }
+  40%      { transform: translate(-1.5px, 2px) rotate(-5deg); }
+  60%      { transform: translate(1.5px, 0.5px) rotate(10deg); }
+  80%      { transform: translate(-2px, -1px) rotate(-3deg); }
+}
+
+.googly-pupil {
+  animation: pupil-bounce 2.5s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════
+   Sandbox Page (standalone, self-contained light theme)
+   ═══════════════════════════════════════════════ */
+
+.sandbox-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #f5f3ee;
+  color: #222;
+}
+
+.sandbox {
+  display: flex;
+  gap: 2.5rem;
+  max-width: 1340px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 100vh;
+  align-items: flex-start;
+}
+
+.sandbox-preview {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: sticky;
+  top: 2rem;
+  padding-top: 3rem;
+}
+
+/* Override world-canvas inside sandbox to use light theme */
+.sandbox-page .world-canvas {
+  background: #faf9f6;
+  border: 2px solid #222;
+  box-shadow: 3px 3px 0 #ccc;
+}
+
+/* ── Controls panel ────────────────────────────── */
+.sandbox-controls {
+  flex: 1;
+  max-width: 360px;
+  padding-top: 1rem;
+}
+
+.controls-title {
+  font-family: 'Caveat', 'Patrick Hand', cursive, monospace;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 0 1.5rem 0;
+  color: #222;
+}
+
+.controls-divider {
+  height: 1px;
+  background: #ccc;
+  margin: 1.5rem 0;
+}
+
+/* ── Control groups ────────────────────────────── */
+.control-group {
+  margin-bottom: 1.25rem;
+}
+
+.control-label {
+  display: block;
+  font-family: 'Caveat', 'Patrick Hand', cursive, monospace;
+  font-size: 0.85rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+}
+
+/* ── Segmented buttons ─────────────────────────── */
+.segments {
+  display: flex;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1.5px solid #bbb;
+}
+
+.segment {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  font-family: 'Caveat', 'Patrick Hand', cursive, monospace;
+  background: #faf9f6;
+  color: #888;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.segment:not(:last-child) {
+  border-right: 1.5px solid #bbb;
+}
+
+.segment.active {
+  background: #222;
+  color: #faf9f6;
+}
+
+.segment:hover:not(.active) {
+  background: #eee;
+  color: #333;
+}
+
+/* ── Color swatches ────────────────────────────── */
+.swatches {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #bbb;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.swatch.active {
+  border-color: #222;
+  box-shadow: 0 0 0 2px #222;
+}
+
+.swatch:hover:not(.active) {
+  border-color: #666;
+}
+
+/* ── Sandbox action buttons ────────────────────── */
+.sandbox-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.sandbox-action-btn {
+  flex: 1;
+  padding: 0.5rem 0.5rem;
+  font-size: 0.8rem;
+  font-family: 'Caveat', 'Patrick Hand', cursive, monospace;
+  border: 1.5px dashed #999;
+  border-radius: 3px;
+  background: #faf9f6;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sandbox-action-btn:hover {
+  background: #f0efe8;
+  border-color: #222;
+  color: #000;
+}
+
+.sandbox-action-btn:active {
+  transform: scale(0.95);
+}
+
+/* ── Responsive ────────────────────────────────── */
+@media (max-width: 1100px) {
+  .sandbox {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sandbox-preview {
+    position: static;
+  }
+
+  .sandbox-controls {
+    max-width: 100%;
+    width: 100%;
+  }
+}

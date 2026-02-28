@@ -5,6 +5,8 @@ export interface Stats {
   structure: number;
 }
 
+import type { CreatureSpec, PhysicsCommand } from './world/types';
+
 export interface Creature {
   name: string;
   species: string;
@@ -16,6 +18,7 @@ export interface Creature {
   imageUrl: string | null;
   birthWords: string;
   generation?: number;
+  creatureSpec?: CreatureSpec;
 }
 
 // 8-axis environment variable levels
@@ -72,6 +75,7 @@ export interface Environment {
   hiddenOpportunity: string;
   visualTone: VisualTone;
   playerAxes: PlayerAxes;
+  worldEvents?: PhysicsCommand[];
 }
 
 export interface EvolutionResult {
@@ -84,6 +88,8 @@ export interface EvolutionResult {
   statChanges: Stats;
   poeticLine: string;
   imageUrl: string | null;
+  creatureSpecMutation?: Partial<CreatureSpec>;
+  worldEvents?: PhysicsCommand[];
 }
 
 export interface TrialResult {
@@ -96,6 +102,7 @@ export interface TrialResult {
   finalScore: number;
   epitaph: string;
   synthesisHint?: string;
+  worldEvents?: PhysicsCommand[];
 }
 
 export interface HistoryEvent {

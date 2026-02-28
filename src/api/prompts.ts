@@ -1,4 +1,4 @@
-import type { Creature, Environment } from '../types';
+import type { Creature, Environment, TrialResult } from '../types';
 
 export const CREATURE_SYSTEM_PROMPT = `You are an evolutionary simulation engine.
 The user provides two keywords. Fuse them into a single fictional plant-like lifeform.
@@ -19,7 +19,30 @@ Output schema:
     "structure": 30~90 사이
   },
   "birth_words": "탄생 순간의 독백 1~2줄. 1인칭. 감성적.",
-  "image_prompt": "이 생명체를 그리기 위한 영어 이미지 프롬프트. 구체적 외형 묘사."
+  "image_prompt": "이 생명체를 그리기 위한 영어 이미지 프롬프트. 구체적 외형 묘사.",
+  "creature_spec": {
+    "body": {
+      "shape": "ellipse" or "roundRect" or "blob",
+      "width": 80~160,
+      "height": 60~140,
+      "color": "hex color reflecting the creature's nature",
+      "stroke": "#222"
+    },
+    "eyes": {
+      "variant": "googly" or "dot" or "cute",
+      "size": 12~24,
+      "spacing": 24~48,
+      "offsetY": -20~-5,
+      "count": 1~4
+    },
+    "mouth": {
+      "variant": "smile" or "open" or "zigzag" or "flat",
+      "width": 14~30,
+      "offsetY": 8~25
+    },
+    "additions": [],
+    "movement": "waddle" or "bounce" or "drift" or "hop"
+  }
 }
 
 규칙:
@@ -28,7 +51,8 @@ Output schema:
 - 약점은 능력과 논리적으로 연결되어야 함 (강한 광합성 → 어둠에 취약)
 - 두 키워드의 물리적 속성뿐 아니라 상징적/문화적 의미도 융합하라
 - 이 생명체가 가진 근본적 딜레마를 약점에 반영하라
-  (예: 빛이 필요하지만 빛이 자신을 부식시킨다)
+- creature_spec의 body color는 키워드의 물성을 반영 (금속→은색, 장미→분홍 등)
+- creature_spec의 movement는 생명체의 성격에 맞게 선택
 - image_prompt는 영어로, "digital art, fantasy creature, botanical illustration" 스타일 키워드 포함`;
 
 export const ENVIRONMENT_SYSTEM_PROMPT = `You simulate extreme planetary environments for a fictional evolution game.
@@ -75,14 +99,26 @@ OUTPUT SCHEMA:
     "primary_color": "영어",
     "mood": "영어",
     "key_visual": "한글 1개"
-  }
+  },
+  "world_events": [
+    { "type": "setGravity", "scale": number },
+    { "type": "setWind", "x": number, "y": number },
+    { "type": "addBody", "bodyType": "stone" or "ball" or "crate" },
+    { "type": "shake", "intensity": number }
+  ]
 }
+
+world_events 규칙:
+- 환경의 물리적 변화를 PhysicsCommand로 표현
+- 지진/화산 → shake + addBody(stone)
+- 폭풍/바람 → setWind
+- 중력 변화 → setGravity
+- 산성비/눈 → addBody(ball) 여러 개
+- 최대 5개 커맨드
 
 VARIABLE RULES:
 - env_variables 중 2~3개가 극단값(양 끝)이어야 함.
 - 극단값끼리 cascading_cause로 논리적 연결 필수.
-  ✅ tectonics: cataclysmic → temperature: extreme_high + atmosphere: toxic (화산 → 고온 + 유독가스)
-  ❌ luminosity: pitch_dark + solvent: desiccated (연결 근거 없이 무작위 조합)
 - instability_index 범위: chaos 1→40~55, 2→50~65, 3→60~80, 4→70~90, 5→85~100
 - 이전 환경이 주어지면, 잔존 효과를 narrative에 반영할 것.
 
@@ -91,12 +127,7 @@ DIVERSITY GUIDANCE (직접 복사하지 말고 변형 활용):
 - 빙하/극저온: 시간 동결 + 에너지 고갈. "잠들 것인가 깨어있을 것인가."
 - 방사선/플레어: 보이지 않는 공포. "겉은 멀쩡한데 안에서 무너진다."
 - 심해/고압: 빛 없는 세계. "새로운 에너지원을 찾거나 죽거나."
-- 건조/사막: 느린 죽음. "시간이 적이다."
-- 기생/생태: 내부의 적. "침략자를 장기로 만들 수 있는가."
-- 우주/무중력: 부재의 위협. "당연한 것이 사라진 세계."
-- 극단 주기: 양극단 왕복. "두 개의 계절, 두 개의 몸."
-- 산성/부식: 녹아내리는 세계. "부식이 새로운 형태를 조각한다."
-- 독성 대기: 숨막히는 세계. "독이 에너지가 될 수 있는가."`;
+- 건조/사막: 느린 죽음. "시간이 적이다."`;
 
 export const EVOLUTION_SYSTEM_PROMPT = `You are an evolution engine.
 Given a parent creature and an environment, generate its next evolutionary form.
@@ -120,8 +151,24 @@ Output schema:
     "structure": 변화량 정수
   },
   "poetic_line": "이 진화를 한 줄로 표현하는 시적 문장",
-  "image_prompt": "진화된 생명체의 영어 이미지 프롬프트. 부모와의 차이점 강조."
+  "image_prompt": "진화된 생명체의 영어 이미지 프롬프트. 부모와의 차이점 강조.",
+  "creature_spec_mutation": {
+    "body": { "color": "new hex color if changed" },
+    "eyes": { "variant": "new variant if changed" },
+    "mouth": { "variant": "new variant if changed" },
+    "movement": "new movement if changed"
+  },
+  "world_events": [
+    { "type": "shake", "intensity": number },
+    { "type": "addBody", "bodyType": "stone" or "ball" or "crate" }
+  ]
 }
+
+creature_spec_mutation 규칙:
+- 진화로 외형이 어떻게 변하는지 반영
+- body color 변경은 거의 항상 포함
+- 극적인 진화 시 눈/입 variant도 변경
+- 부모 CreatureSpec의 일부만 변경 (전체 덮어쓰기 아님)
 
 규칙:
 - tradeoff 최소 1개 필수. 무조건 좋아지기만 하면 안 됨.
@@ -146,8 +193,17 @@ Output schema:
   "damage_or_mutation": "생존 시: 시련으로 얻은 변이. 실패 시: 최후의 모습.",
   "final_score": 0~100,
   "epitaph": "이 시련의 결과를 한 줄로 요약. 감성적.",
-  "synthesis_hint": "생존 시에만. 다음 합성에서 어떤 종류의 물질이 도움이 될지 암시 1줄."
+  "synthesis_hint": "생존 시에만. 다음 합성에서 어떤 종류의 물질이 도움이 될지 암시 1줄.",
+  "world_events": [
+    { "type": "shake", "intensity": number },
+    { "type": "addBody", "bodyType": "stone" or "ball" or "crate" }
+  ]
 }
+
+world_events 규칙:
+- 시련의 물리적 효과를 표현
+- 생존 시: 가벼운 효과 (작은 shake, ball 몇 개)
+- 멸종 시: 극적인 효과 (강한 shake, 많은 stone, clear)
 
 규칙:
 - traits가 시련에 직접 대응 → 생존 확률 높음
@@ -156,6 +212,45 @@ Output schema:
 - 100% 예측 가능하면 안 됨. 의외의 특성이 의외의 방식으로 작동할 수 있음
 - 멸종 시에도 "마지막에 무엇을 남겼는가" 묘사 (포자, 종자, 신호 등)
 - synthesis_hint는 너무 직접적이지 않게, 은유적으로 (예: "더 유연한 무언가가 필요하다")`;
+
+export const SYNTHESIS_SYSTEM_PROMPT = `You are an evolutionary fusion engine.
+A creature that survived a trial is now fused with a new material/concept.
+The fusion should create meaningful new abilities while respecting the creature's history.
+
+Write in Korean. Respond ONLY with valid JSON.
+
+Output schema:
+{
+  "new_name": "합성 후 이름. 기존 이름의 변형 + 새 물질 반영.",
+  "fusion_narrative": "합성 과정 2~3줄. 새 물질이 기존 생명체에 어떻게 스며드는지.",
+  "new_traits": ["합성으로 획득한 새 특성 1~2개"],
+  "modified_vulnerabilities": ["기존 약점이 어떻게 변했는지."],
+  "energy_strategy": "합성 후 에너지 전략",
+  "stat_changes": {
+    "hp": 변화량,
+    "adaptability": 변화량,
+    "resilience": 변화량,
+    "structure": 변화량
+  },
+  "fusion_line": "합성을 한 줄로 표현. 시적.",
+  "creature_spec_mutation": {
+    "body": { "color": "new hex color reflecting fusion" },
+    "eyes": { "variant": "changed if fusion affects perception" },
+    "movement": "changed if fusion affects mobility"
+  },
+  "world_events": [
+    { "type": "shake", "intensity": number },
+    { "type": "addBody", "bodyType": "ball" }
+  ]
+}
+
+규칙:
+- 새 키워드의 물리적 속성과 상징적 의미 모두 반영
+- 기존 특성을 완전히 덮어쓰지 않음. 기존 흔적이 남아야 함.
+- 합성으로 기존 약점 1개가 해소될 수 있지만, 새로운 약점이 생길 수도 있음.
+- stat_changes 합계는 약간 양수 (+5~+15). 합성은 보상이므로 순이득이 있어야 함.`;
+
+// ── User prompt builders ──────────────────────────────────
 
 export function buildCreatureUserPrompt(keyword1: string, keyword2: string): string {
   return `키워드: "${keyword1}" + "${keyword2}"`;
@@ -222,6 +317,32 @@ export function buildTrialUserPrompt(
     '',
     `chaos_level: ${chaosLevel}`,
   ];
+
+  return lines.join('\n');
+}
+
+export function buildSynthesisUserPrompt(
+  creature: Creature,
+  trialResult: TrialResult,
+  newKeyword: string,
+): string {
+  const lines = [
+    `기존 생명체: ${creature.name}`,
+    `특성: ${creature.traits.join(', ')}`,
+    `약점: ${creature.vulnerabilities.join(', ')}`,
+    `에너지 전략: ${creature.energyStrategy ?? '광합성'}`,
+    `스탯: HP ${creature.stats.hp}, 적응력 ${creature.stats.adaptability}, 회복력 ${creature.stats.resilience}, 구조 ${creature.stats.structure}`,
+    `세대: ${creature.generation ?? 1}`,
+    '',
+    `시련 생존 결과: ${trialResult.damageOrMutation}`,
+  ];
+
+  if (trialResult.synthesisHint) {
+    lines.push(`합성 힌트: ${trialResult.synthesisHint}`);
+  }
+
+  lines.push('');
+  lines.push(`새 키워드: "${newKeyword}"`);
 
   return lines.join('\n');
 }

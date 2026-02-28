@@ -73,6 +73,21 @@ export const environmentSchema: Schema = {
       },
       required: ['primary_color', 'mood', 'key_visual'],
     },
+    world_events: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          type: { type: SchemaType.STRING },
+          bodyType: { type: SchemaType.STRING },
+          intensity: { type: SchemaType.NUMBER },
+          scale: { type: SchemaType.NUMBER },
+          x: { type: SchemaType.NUMBER },
+          y: { type: SchemaType.NUMBER },
+        },
+        required: ['type'],
+      },
+    },
   },
   required: [
     'event_name',
@@ -116,6 +131,44 @@ export const creatureSchema: Schema = {
     },
     birth_words: { type: SchemaType.STRING },
     image_prompt: { type: SchemaType.STRING },
+    creature_spec: {
+      type: SchemaType.OBJECT,
+      properties: {
+        body: {
+          type: SchemaType.OBJECT,
+          properties: {
+            shape: { type: SchemaType.STRING, enum: ['ellipse', 'roundRect', 'blob'] },
+            width: { type: SchemaType.INTEGER },
+            height: { type: SchemaType.INTEGER },
+            color: { type: SchemaType.STRING },
+            stroke: { type: SchemaType.STRING },
+          },
+          required: ['shape', 'width', 'height', 'color', 'stroke'],
+        },
+        eyes: {
+          type: SchemaType.OBJECT,
+          properties: {
+            variant: { type: SchemaType.STRING, enum: ['googly', 'dot', 'cute'] },
+            size: { type: SchemaType.INTEGER },
+            spacing: { type: SchemaType.INTEGER },
+            offsetY: { type: SchemaType.INTEGER },
+            count: { type: SchemaType.INTEGER },
+          },
+          required: ['variant', 'size', 'spacing', 'offsetY', 'count'],
+        },
+        mouth: {
+          type: SchemaType.OBJECT,
+          properties: {
+            variant: { type: SchemaType.STRING, enum: ['smile', 'open', 'zigzag', 'flat'] },
+            width: { type: SchemaType.INTEGER },
+            offsetY: { type: SchemaType.INTEGER },
+          },
+          required: ['variant', 'width', 'offsetY'],
+        },
+        movement: { type: SchemaType.STRING, enum: ['waddle', 'bounce', 'drift', 'hop'] },
+      },
+      required: ['body', 'eyes', 'mouth', 'movement'],
+    },
   },
   required: ['name', 'species', 'description', 'traits', 'vulnerabilities', 'energy_strategy', 'stats', 'birth_words', 'image_prompt'],
 };
@@ -150,6 +203,39 @@ export const evolutionSchema: Schema = {
     },
     poetic_line: { type: SchemaType.STRING },
     image_prompt: { type: SchemaType.STRING },
+    creature_spec_mutation: {
+      type: SchemaType.OBJECT,
+      properties: {
+        body: {
+          type: SchemaType.OBJECT,
+          properties: { color: { type: SchemaType.STRING } },
+        },
+        eyes: {
+          type: SchemaType.OBJECT,
+          properties: { variant: { type: SchemaType.STRING } },
+        },
+        mouth: {
+          type: SchemaType.OBJECT,
+          properties: { variant: { type: SchemaType.STRING } },
+        },
+        movement: { type: SchemaType.STRING },
+      },
+    },
+    world_events: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          type: { type: SchemaType.STRING },
+          bodyType: { type: SchemaType.STRING },
+          intensity: { type: SchemaType.NUMBER },
+          scale: { type: SchemaType.NUMBER },
+          x: { type: SchemaType.NUMBER },
+          y: { type: SchemaType.NUMBER },
+        },
+        required: ['type'],
+      },
+    },
   },
   required: ['new_name', 'evolution_summary', 'new_traits', 'lost_traits', 'tradeoffs', 'adaptation_score', 'stat_changes', 'poetic_line', 'image_prompt'],
 };
@@ -166,6 +252,79 @@ export const trialSchema: Schema = {
     final_score: { type: SchemaType.INTEGER },
     epitaph: { type: SchemaType.STRING },
     synthesis_hint: { type: SchemaType.STRING },
+    world_events: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          type: { type: SchemaType.STRING },
+          bodyType: { type: SchemaType.STRING },
+          intensity: { type: SchemaType.NUMBER },
+          scale: { type: SchemaType.NUMBER },
+          x: { type: SchemaType.NUMBER },
+          y: { type: SchemaType.NUMBER },
+        },
+        required: ['type'],
+      },
+    },
   },
   required: ['trial_name', 'trial_description', 'survived', 'narrative', 'reason', 'damage_or_mutation', 'final_score', 'epitaph'],
+};
+
+export const synthesisSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    new_name: { type: SchemaType.STRING },
+    fusion_narrative: { type: SchemaType.STRING },
+    new_traits: {
+      type: SchemaType.ARRAY,
+      items: { type: SchemaType.STRING },
+    },
+    modified_vulnerabilities: {
+      type: SchemaType.ARRAY,
+      items: { type: SchemaType.STRING },
+    },
+    energy_strategy: { type: SchemaType.STRING },
+    stat_changes: {
+      type: SchemaType.OBJECT,
+      properties: {
+        hp: { type: SchemaType.INTEGER },
+        adaptability: { type: SchemaType.INTEGER },
+        resilience: { type: SchemaType.INTEGER },
+        structure: { type: SchemaType.INTEGER },
+      },
+      required: ['hp', 'adaptability', 'resilience', 'structure'],
+    },
+    fusion_line: { type: SchemaType.STRING },
+    creature_spec_mutation: {
+      type: SchemaType.OBJECT,
+      properties: {
+        body: {
+          type: SchemaType.OBJECT,
+          properties: { color: { type: SchemaType.STRING } },
+        },
+        eyes: {
+          type: SchemaType.OBJECT,
+          properties: { variant: { type: SchemaType.STRING } },
+        },
+        movement: { type: SchemaType.STRING },
+      },
+    },
+    world_events: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          type: { type: SchemaType.STRING },
+          bodyType: { type: SchemaType.STRING },
+          intensity: { type: SchemaType.NUMBER },
+          scale: { type: SchemaType.NUMBER },
+          x: { type: SchemaType.NUMBER },
+          y: { type: SchemaType.NUMBER },
+        },
+        required: ['type'],
+      },
+    },
+  },
+  required: ['new_name', 'fusion_narrative', 'new_traits', 'modified_vulnerabilities', 'energy_strategy', 'stat_changes', 'fusion_line'],
 };
