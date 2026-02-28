@@ -590,6 +590,40 @@
   box-shadow: var(--shadow-sm);
 }
 
+.history__synthesis-recommended {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border: 1px dashed var(--accent-amber);
+  border-radius: var(--radius-sm);
+}
+
+.history__synthesis-recommended-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--accent-amber);
+  letter-spacing: 0.05em;
+  font-family: var(--font-hand);
+}
+
+.history__synthesis-recommended-grid {
+  display: flex;
+  gap: var(--space-xs);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.history__synthesis-emoji--recommended {
+  border-color: var(--accent-amber);
+  border-style: solid;
+}
+
+.history__synthesis-emoji--recommended:hover {
+  border-color: var(--accent-amber);
+  transform: scale(1.2);
+}
+
 .history__synthesis-categories {
   display: flex;
   gap: var(--space-xs);

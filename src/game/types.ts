@@ -73,6 +73,7 @@ export interface GameTrial {
   finalScore: number;
   epitaph: string;
   synthesisHint?: string;
+  recommendedEmojis?: string[];
   worldEvents: PhysicsCommand[];
 }
 

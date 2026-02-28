@@ -20,6 +20,7 @@ interface HistoryPanelProps {
   onSynthesize?: (keyword: string) => void;
   onSkip?: () => void;
   synthesisHint?: string;
+  recommendedEmojis?: string[];
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 }
@@ -195,7 +196,7 @@ function renderDetail(type: string, detail: HistoryEventDetail) {
   }
 }
 
-export default function HistoryPanel({ history = [], activeIndex, phase, creature, onSynthesize, onSkip, synthesisHint, collapsed, onToggleCollapse }: HistoryPanelProps) {
+export default function HistoryPanel({ history = [], activeIndex, phase, creature, onSynthesize, onSkip, synthesisHint, recommendedEmojis, collapsed, onToggleCollapse }: HistoryPanelProps) {
   const [activeTab, setActiveTab] = useState<'history' | 'stats'>('history');
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
@@ -300,6 +301,23 @@ export default function HistoryPanel({ history = [], activeIndex, phase, creatur
                   <div className="history__synthesis-slot">
                     {selectedEmoji || '?'}
                   </div>
+
+                  {recommendedEmojis && recommendedEmojis.length > 0 && (
+                    <div className="history__synthesis-recommended">
+                      <div className="history__synthesis-recommended-label">추천</div>
+                      <div className="history__synthesis-recommended-grid">
+                        {recommendedEmojis.map((emoji) => (
+                          <button
+                            key={emoji}
+                            className={`history__synthesis-emoji history__synthesis-emoji--recommended ${selectedEmoji === emoji ? 'history__synthesis-emoji--selected' : ''}`}
+                            onClick={() => setSelectedEmoji(selectedEmoji === emoji ? null : emoji)}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="history__synthesis-categories">
                     {EMOJI_CATEGORIES.map((cat) => (

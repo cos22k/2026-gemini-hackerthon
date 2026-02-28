@@ -1,4 +1,5 @@
 import type { Creature, Environment, TrialResult } from '../types';
+import { ALL_EMOJIS } from '../game/emojiCategories';
 
 export const CREATURE_SYSTEM_PROMPT = `You are an evolutionary simulation engine.
 The user provides two keywords. Fuse them into a single fictional plant-like lifeform.
@@ -255,6 +256,7 @@ Output schema:
   "final_score": 0~100,
   "epitaph": "이 시련의 결과를 한 줄로 요약. 담담하게.",
   "synthesis_hint": "생존 시에만. 다음 합성에서 어떤 종류의 물질이 도움이 될지 암시 1줄.",
+  "recommended_emojis": ["생존 시에만. 아래 이모지 풀에서 3~5개 선택. 시련의 위협, 생명체가 견딘 것, 앞으로 도움이 될 것을 고려."],
   "world_events": [
     { "type": "shake", "intensity": number },
     { "type": "addBody", "bodyType": "stone" or "ball" or "crate" }
@@ -273,6 +275,7 @@ world_events 규칙:
 - 100% 예측 가능하면 안 됨. 의외의 특성이 의외의 방식으로 작동할 수 있음
 - 멸종 시에도 "마지막에 무엇을 남겼는가" 묘사 (포자, 종자, 신호 등)
 - synthesis_hint는 너무 직접적이지 않게, 은유적으로 (예: "더 유연한 무언가가 필요하다")
+- recommended_emojis는 반드시 아래 이모지 풀에서만 선택. 시련의 위협 유형, 생명체가 부족한 것, 다음 세대에 필요한 능력을 고려하여 3~5개 추천.
 
 세대별 생존 편향:
 - 세대 1 (chaos 1): 생존 확률 70~80%. 첫 시련은 맛보기다. 약점이 노출되더라도 초기 잠재력을 인정하여 생존 판정. 멸종 시에도 final_score 40 이상.
@@ -406,6 +409,9 @@ export function buildTrialUserPrompt(
   if ((creature.generation ?? 1) <= 2) {
     lines.push(`참고: 초기 세대 생명체입니다. 성장 잠재력을 고려하세요.`);
   }
+
+  lines.push('');
+  lines.push(`이모지 풀 (recommended_emojis는 이 중에서만 선택): ${ALL_EMOJIS.join('')}`);
 
   return lines.join('\n');
 }

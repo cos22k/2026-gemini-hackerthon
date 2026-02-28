@@ -57,3 +57,5 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
     ],
   },
 ];
+
+export const ALL_EMOJIS: string[] = EMOJI_CATEGORIES.flatMap((cat) => cat.emojis);

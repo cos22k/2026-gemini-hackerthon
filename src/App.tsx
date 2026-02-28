@@ -544,6 +544,7 @@ function GamePage() {
         onSynthesize={handleSynthesis}
         onSkip={handleSkipSynthesis}
         synthesisHint={trial?.synthesisHint}
+        recommendedEmojis={trial?.recommendedEmojis}
         collapsed={historyCollapsed}
         onToggleCollapse={() => setHistoryCollapsed((c) => !c)}
       />
