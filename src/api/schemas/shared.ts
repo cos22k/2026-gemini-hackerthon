@@ -86,11 +86,35 @@ export const visualToneSchema = z.object({
   key_visual: z.string(),
 });
 
+export const additionSpecSchema = z.object({
+  el: z.enum(['ellipse', 'circle', 'rect', 'path', 'line', 'polygon', 'polyline']),
+  fill: z.string().optional(),
+  stroke: z.string().optional(),
+  strokeWidth: z.number().optional(),
+});
+
 export const specMutationSchema = z.object({
-  body: z.object({ color: z.string() }).optional(),
-  eyes: z.object({ variant: z.string() }).optional(),
-  mouth: z.object({ variant: z.string() }).optional(),
-  movement: z.string().optional(),
+  body: z.object({
+    shape: z.enum(['ellipse', 'roundRect', 'blob']).optional(),
+    width: z.number().int().optional(),
+    height: z.number().int().optional(),
+    color: z.string().optional(),
+    stroke: z.string().optional(),
+  }).optional(),
+  eyes: z.object({
+    variant: z.enum(['googly', 'dot', 'cute']).optional(),
+    size: z.number().int().optional(),
+    spacing: z.number().int().optional(),
+    offsetY: z.number().int().optional(),
+    count: z.number().int().optional(),
+  }).optional(),
+  mouth: z.object({
+    variant: z.enum(['smile', 'open', 'zigzag', 'flat']).optional(),
+    width: z.number().int().optional(),
+    offsetY: z.number().int().optional(),
+  }).optional(),
+  additions: z.array(additionSpecSchema).optional(),
+  movement: z.enum(['waddle', 'bounce', 'drift', 'hop']).optional(),
 });
 
 // ── Default creature spec ────────────────────────────────
