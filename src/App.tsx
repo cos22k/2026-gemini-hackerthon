@@ -299,7 +299,9 @@ function GamePage() {
         setHistory((prev) => [...prev, trialEvent]);
         persistEvent(trialEvent);
         setLoading(false);
-        setPhase(trialResult.survived ? "synthesis" : "epilogue");
+        const nextPhase = trialResult.survived ? "synthesis" : "epilogue";
+        setPhase(nextPhase);
+        persistState(nextPhase);
       } else {
         setLoading(false);
       }

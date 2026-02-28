@@ -52,6 +52,41 @@
   line-height: 1.7;
 }
 
+/* Previous sessions */
+.intro__sessions {
+  margin-bottom: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.intro__sessions-label {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-bottom: var(--space-xs);
+  font-family: var(--font-hand);
+}
+
+.intro__session-btn {
+  padding: var(--space-sm) var(--space-lg);
+  background: transparent;
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  font-family: var(--font-hand);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 250px;
+}
+
+.intro__session-btn:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+  border-style: solid;
+}
+
 .intro__inputs {
   display: flex;
   gap: var(--space-md);
