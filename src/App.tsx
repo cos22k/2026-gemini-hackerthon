@@ -8,11 +8,25 @@ import './styles/components.css';
 import './styles/world.css';
 
 import type { Creature, Environment, EvolutionResult, TrialResult, HistoryEvent, ActionButton } from './types';
+import type { CreatureSpec } from './world/types';
 import { generateCreature, generateEnvironment, generateEvolution, generateTrial, generateSynthesis } from './api/gemini';
 import { getChaosLevel } from './game/environment';
 import { executeWorldEvents } from './game/worldEventExecutor';
+import { normalizeCreatureSpec } from './api/schemas';
 import { useAuth } from './lib/auth';
 import { createSession, saveGameState, saveGameEvent } from './game/firestorePersistence';
+
+function mergeCreatureSpec(current: CreatureSpec | undefined, mutation?: Partial<CreatureSpec>): CreatureSpec {
+  const base = current ?? normalizeCreatureSpec(undefined);
+  if (!mutation) return base;
+  return normalizeCreatureSpec({
+    body: { ...base.body, ...mutation.body },
+    eyes: { ...base.eyes, ...mutation.eyes },
+    mouth: { ...base.mouth, ...mutation.mouth },
+    additions: mutation.additions ?? base.additions,
+    movement: mutation.movement ?? base.movement,
+  } as Record<string, unknown>);
+}
 import IntroScreen from './components/IntroScreen';
 import MainStage from './components/MainStage';
 import HistoryPanel from './components/HistoryPanel';
@@ -128,7 +142,7 @@ function GamePage() {
     setEvolution(evo);
     await dispatchWorldEvents(evo.worldEvents);
 
-    // Update creature with evolved stats
+    // Update creature with evolved stats and visual mutation
     const evolvedCreature: Creature = {
       ...creature,
       name: evo.newName,
@@ -142,6 +156,7 @@ function GamePage() {
         resilience: Math.max(0, creature.stats.resilience + evo.statChanges.resilience),
         structure: Math.max(0, creature.stats.structure + evo.statChanges.structure),
       },
+      creatureSpec: mergeCreatureSpec(creature.creatureSpec, evo.creatureSpecMutation),
     };
     setCreature(evolvedCreature);
 
@@ -203,6 +218,7 @@ function GamePage() {
           structure: Math.max(0, creature.stats.structure + result.statChanges.structure),
         },
         generation: (creature.generation ?? 1) + 1,
+        creatureSpec: mergeCreatureSpec(creature.creatureSpec, result.creatureSpecMutation),
       };
       setCreature(synthesizedCreature);
 
