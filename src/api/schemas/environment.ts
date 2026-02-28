@@ -18,6 +18,7 @@ export const environmentApiSchema = z.object({
   threat_detail: z.string(),
   hidden_opportunity: z.string(),
   visual_tone: visualToneSchema,
+  duration_seconds: z.number().int(),
   world_events: z.array(worldEventSchema).optional(),
 });
 
@@ -44,6 +45,7 @@ export function parseEnvironmentResponse(raw: unknown): Environment {
       keyVisual: p.visual_tone.key_visual,
     },
     playerAxes: convertToPlayerAxes(envVariables),
+    durationSeconds: Math.max(10, Math.min(30, p.duration_seconds)),
     worldEvents: normalizeWorldEvents(p.world_events),
   };
 }

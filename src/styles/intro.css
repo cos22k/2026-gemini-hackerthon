@@ -1,4 +1,4 @@
-/* === Intro Screen === */
+/* === Intro Screen — Doodle/Sketch Style === */
 .intro {
   display: flex;
   flex-direction: column;
@@ -7,7 +7,7 @@
   height: 100%;
   padding: var(--space-xl);
   text-align: center;
-  background: radial-gradient(ellipse at center bottom, #0f1a12 0%, var(--bg-primary) 70%);
+  background: var(--bg-primary);
 }
 
 .intro__icon {
@@ -22,19 +22,17 @@
 }
 
 .intro__title {
-  font-size: var(--text-4xl);
+  font-size: 3rem;
+  font-family: var(--font-hand);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.02em;
   margin-bottom: var(--space-xs);
-  background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 
 .intro__subtitle {
   font-size: var(--text-sm);
-  font-family: var(--font-mono);
+  font-family: var(--font-hand-latin);
   color: var(--text-muted);
   letter-spacing: 0.3em;
   text-transform: uppercase;
@@ -49,7 +47,7 @@
 }
 
 .intro__tagline {
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   color: var(--text-secondary);
   line-height: 1.7;
 }
@@ -62,52 +60,56 @@
 
 .intro__input {
   width: 200px;
-  padding: var(--space-md) var(--space-lg);
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-xs);
+  background: transparent;
+  border: none;
+  border-bottom: 2px dashed var(--border-light);
   color: var(--text-primary);
-  font-size: var(--text-base);
-  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  font-family: var(--font-hand);
   text-align: center;
   outline: none;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: border-color var(--transition-fast);
 }
 
 .intro__input::placeholder {
   color: var(--text-muted);
+  font-family: var(--font-hand);
 }
 
 .intro__input:focus {
-  border-color: var(--accent-green);
-  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.15);
+  border-bottom-color: var(--accent-green);
+  border-bottom-style: solid;
 }
 
 .intro__button {
   padding: var(--space-md) var(--space-2xl);
-  background: linear-gradient(135deg, var(--accent-green-dim), #1a3a2a);
-  border: 1px solid var(--accent-green);
+  background: transparent;
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-md);
-  color: var(--accent-green);
-  font-size: var(--text-lg);
-  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  font-family: var(--font-hand);
   cursor: pointer;
   transition: all var(--transition-fast);
-  font-family: var(--font-sans);
+  box-shadow: var(--shadow-md);
 }
 
 .intro__button:hover {
-  background: linear-gradient(135deg, #2a6a3a, #1a4a2a);
-  box-shadow: 0 0 20px rgba(74, 222, 128, 0.2);
-  transform: translateY(-1px);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.15);
 }
 
 .intro__button:active {
-  transform: translateY(0);
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
 }
 
 .intro__button:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;

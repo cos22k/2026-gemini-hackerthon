@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './styles/global.css';
 import './styles/intro.css';
@@ -6,29 +6,29 @@ import './styles/stage.css';
 import './styles/modal.css';
 import './styles/components.css';
 import './styles/world.css';
+import './styles/effects.css';
 
 import type { Creature, Environment, EvolutionResult, TrialResult, HistoryEvent, ActionButton } from './types';
 import { generateCreature, generateEnvironment, generateEvolution, generateTrial, generateSynthesis } from './api/gemini';
 import { getChaosLevel } from './game/environment';
 import { executeWorldEvents } from './game/worldEventExecutor';
 import { useAuth } from './lib/auth';
-import { createSession, saveGameState, saveGameEvent } from './game/firestorePersistence';
+import { createSession, saveGameEvent } from './game/firestorePersistence';
 import IntroScreen from './components/IntroScreen';
 import MainStage from './components/MainStage';
 import HistoryPanel from './components/HistoryPanel';
-import ChoiceModal from './components/ChoiceModal';
 import SynthesisView from './components/SynthesisView';
 import EpilogueView from './components/EpilogueView';
 import SandboxPage from './pages/SandboxPage';
 import type { WorldSceneHandle } from './world/WorldScene';
-import type { SynthesisResult } from './game/types';
+
 
 function GamePage() {
   const { uid } = useAuth();
   const worldRef = useRef<WorldSceneHandle>(null);
+  const envTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [phase, setPhase] = useState('intro');
-  const [showModal, setShowModal] = useState(false);
   const [creature, setCreature] = useState<Creature | null>(null);
   const [environment, setEnvironment] = useState<Environment | null>(null);
   const [evolution, setEvolution] = useState<EvolutionResult | null>(null);
@@ -39,7 +39,12 @@ function GamePage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [round, setRound] = useState(1);
 
-  const chaosLevel = getChaosLevel(creature?.generation ?? round);
+  // Clear timer on unmount
+  useEffect(() => {
+    return () => {
+      if (envTimerRef.current) clearTimeout(envTimerRef.current);
+    };
+  }, []);
 
   const dispatchWorldEvents = async (events?: unknown[]) => {
     if (!events || !Array.isArray(events) || !worldRef.current) return;
@@ -58,6 +63,24 @@ function GamePage() {
       saveGameEvent(uid, sessionId, event).catch(console.error);
     }
   };
+
+  // Start environment phase with auto-timer
+  const startEnvironmentPhase = useCallback((env: Environment) => {
+    setEnvironment(env);
+    const envEvent: HistoryEvent = { type: 'environment', title: env.eventName, summary: `불안정 지수 ${env.instabilityIndex}` };
+    setHistory((prev) => [...prev, envEvent]);
+    persistEvent(envEvent);
+    setLoading(false);
+    setPhase('environment');
+    dispatchWorldEvents(env.worldEvents);
+
+    // Auto-proceed after AI-decided duration
+    if (envTimerRef.current) clearTimeout(envTimerRef.current);
+    envTimerRef.current = setTimeout(() => {
+      handleProceedFromEnvironment();
+    }, env.durationSeconds * 1000);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleStart = async (k1: string, k2: string) => {
     setPhase('birth');
@@ -89,58 +112,54 @@ function GamePage() {
     setHistory([birthEvent]);
     persistEvent(birthEvent);
 
-    // Generate environment
-    setLoadingMessage('환경이 변화하고 있습니다...');
+    // Show creature on stage (no loading overlay), generate env in background
+    setLoading(false);
+    setPhase('birth');
+
     const env = await generateEnvironment(newCreature, getChaosLevel(newCreature.generation ?? 1));
     console.log('[Environment]', env);
 
     if (env) {
-      setEnvironment(env);
-      const envEvent: HistoryEvent = { type: 'environment', title: env.eventName, summary: `불안정 지수 ${env.instabilityIndex}` };
-      setHistory((prev) => [...prev, envEvent]);
-      persistEvent(envEvent);
-      setLoading(false);
-      setPhase('environment');
-      setShowModal(true);
-      await dispatchWorldEvents(env.worldEvents);
-    } else {
-      setLoading(false);
-      setLoadingMessage('');
+      startEnvironmentPhase(env);
     }
   };
 
-  const handleProceedFromEnvironment = async () => {
-    if (!creature || !environment) return;
+  const handleProceedFromEnvironment = useCallback(async () => {
+    // Clear auto-timer
+    if (envTimerRef.current) {
+      clearTimeout(envTimerRef.current);
+      envTimerRef.current = null;
+    }
 
-    setShowModal(false);
     setPhase('evolving');
-    setLoading(true);
-    setLoadingMessage('진화가 진행되고 있습니다...');
+    // No loading overlay — show evolving visual effect instead
 
-    const evo = await generateEvolution(creature, environment);
+    // We need the latest creature and environment
+    const currentCreature = creatureRef.current;
+    const currentEnvironment = environmentRef.current;
+    if (!currentCreature || !currentEnvironment) return;
+
+    const evo = await generateEvolution(currentCreature, currentEnvironment);
     console.log('[Evolution]', evo);
 
-    if (!evo) {
-      setLoading(false);
-      return;
-    }
+    if (!evo) return;
 
     setEvolution(evo);
     await dispatchWorldEvents(evo.worldEvents);
 
     // Update creature with evolved stats
     const evolvedCreature: Creature = {
-      ...creature,
+      ...currentCreature,
       name: evo.newName,
       traits: [
-        ...creature.traits.filter((t) => !evo.lostTraits.includes(t)),
+        ...currentCreature.traits.filter((t) => !evo.lostTraits.includes(t)),
         ...evo.newTraits,
       ],
       stats: {
-        hp: Math.max(1, creature.stats.hp + evo.statChanges.hp),
-        adaptability: Math.max(0, creature.stats.adaptability + evo.statChanges.adaptability),
-        resilience: Math.max(0, creature.stats.resilience + evo.statChanges.resilience),
-        structure: Math.max(0, creature.stats.structure + evo.statChanges.structure),
+        hp: Math.max(1, currentCreature.stats.hp + evo.statChanges.hp),
+        adaptability: Math.max(0, currentCreature.stats.adaptability + evo.statChanges.adaptability),
+        resilience: Math.max(0, currentCreature.stats.resilience + evo.statChanges.resilience),
+        structure: Math.max(0, currentCreature.stats.structure + evo.statChanges.structure),
       },
     };
     setCreature(evolvedCreature);
@@ -148,14 +167,13 @@ function GamePage() {
     const evoEvent: HistoryEvent = { type: 'evolution', title: evo.newName, summary: evo.poeticLine };
     setHistory((prev) => [...prev, evoEvent]);
     persistEvent(evoEvent);
-    setLoading(false);
 
-    // Auto-proceed to trial
+    // Auto-proceed to trial after showing evolution results
     setTimeout(async () => {
       setLoading(true);
       setLoadingMessage('시련이 다가오고 있습니다...');
 
-      const trialResult = await generateTrial(evolvedCreature, environment, chaosLevel);
+      const trialResult = await generateTrial(evolvedCreature, currentEnvironment, getChaosLevel(evolvedCreature.generation ?? round));
       console.log('[Trial]', trialResult);
 
       if (trialResult) {
@@ -176,7 +194,14 @@ function GamePage() {
         setLoading(false);
       }
     }, 2000);
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [round]);
+
+  // Refs to access latest state in callbacks
+  const creatureRef = useRef(creature);
+  creatureRef.current = creature;
+  const environmentRef = useRef(environment);
+  environmentRef.current = environment;
 
   const handleSynthesis = async (keyword: string) => {
     if (!creature || !trial) return;
@@ -210,26 +235,20 @@ function GamePage() {
       setHistory((prev) => [...prev, synthEvent]);
       persistEvent(synthEvent);
 
-      // Start next round
+      // Start next round — generate env in background
       setRound((r) => r + 1);
       setEvolution(null);
       setTrial(null);
 
-      setLoadingMessage('환경이 변화하고 있습니다...');
+      // Show creature on stage while env generates
+      setPhase('birth');
+      setLoading(false);
+
       const env = await generateEnvironment(synthesizedCreature, getChaosLevel((synthesizedCreature.generation ?? 1)));
       console.log('[Environment R' + (round + 1) + ']', env);
 
       if (env) {
-        setEnvironment(env);
-        const envEvent: HistoryEvent = { type: 'environment', title: env.eventName, summary: `불안정 지수 ${env.instabilityIndex}` };
-        setHistory((prev) => [...prev, envEvent]);
-        persistEvent(envEvent);
-        setLoading(false);
-        setPhase('environment');
-        setShowModal(true);
-        await dispatchWorldEvents(env.worldEvents);
-      } else {
-        setLoading(false);
+        startEnvironmentPhase(env);
       }
     } else {
       setLoading(false);
@@ -242,30 +261,22 @@ function GamePage() {
     setRound((r) => r + 1);
     setEvolution(null);
     setTrial(null);
-    setLoading(true);
-    setLoadingMessage('환경이 변화하고 있습니다...');
 
     const nextCreature = { ...creature, generation: (creature.generation ?? 1) + 1 };
     setCreature(nextCreature);
 
+    // Show creature on stage while env generates
+    setPhase('birth');
+
     const env = await generateEnvironment(nextCreature, getChaosLevel(nextCreature.generation ?? 1));
     if (env) {
-      setEnvironment(env);
-      const envEvent: HistoryEvent = { type: 'environment', title: env.eventName, summary: `불안정 지수 ${env.instabilityIndex}` };
-      setHistory((prev) => [...prev, envEvent]);
-      persistEvent(envEvent);
-      setLoading(false);
-      setPhase('environment');
-      setShowModal(true);
-      await dispatchWorldEvents(env.worldEvents);
-    } else {
-      setLoading(false);
+      startEnvironmentPhase(env);
     }
   };
 
   const handleRestart = () => {
+    if (envTimerRef.current) clearTimeout(envTimerRef.current);
     setPhase('intro');
-    setShowModal(false);
     setCreature(null);
     setEnvironment(null);
     setEvolution(null);
@@ -286,6 +297,16 @@ function GamePage() {
 
   return (
     <div className="game-layout">
+      {/* SVG sketchy filter (used by world.css .physics-body) */}
+      <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+        <defs>
+          <filter id="sketchy">
+            <feTurbulence type="turbulence" baseFrequency="0.03" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" />
+          </filter>
+        </defs>
+      </svg>
+
       {loading && (
         <div className="modal-overlay">
           <div className="modal" style={{ textAlign: 'center' }}>
@@ -299,10 +320,13 @@ function GamePage() {
       <MainStage
         phase={phase}
         creature={creature ?? undefined}
+        environment={environment ?? undefined}
         evolution={evolution ?? undefined}
         trial={trial ?? undefined}
         actionButtons={actionButtons}
         worldRef={worldRef}
+        onProceed={handleProceedFromEnvironment}
+        durationSeconds={environment?.durationSeconds}
       >
         {phase === 'synthesis' && trial && creature && (
           <SynthesisView
@@ -321,13 +345,6 @@ function GamePage() {
         history={history}
         activeIndex={history.length - 1}
       />
-
-      {showModal && environment && (
-        <ChoiceModal
-          environment={environment}
-          onProceed={handleProceedFromEnvironment}
-        />
-      )}
     </div>
   );
 }

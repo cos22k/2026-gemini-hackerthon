@@ -1,26 +1,33 @@
 import type { RefObject, ReactNode } from 'react';
-import type { Creature, EvolutionResult, TrialResult, ActionButton } from '../types';
+import type { Creature, Environment, EvolutionResult, TrialResult, ActionButton } from '../types';
 import { WorldScene, type WorldSceneHandle } from '../world/WorldScene';
 import TrialView from './TrialView';
 import ActionButtons from './ActionButtons';
+import EnvironmentEffects from './EnvironmentEffects';
 
 interface MainStageProps {
   phase: string;
   creature?: Creature;
+  environment?: Environment;
   evolution?: EvolutionResult;
   trial?: TrialResult;
   actionButtons?: ActionButton[];
   worldRef?: RefObject<WorldSceneHandle | null>;
+  onProceed?: () => void;
+  durationSeconds?: number;
   children?: ReactNode;
 }
 
 export default function MainStage({
   phase,
   creature,
+  environment,
   evolution,
   trial,
   actionButtons,
   worldRef,
+  onProceed,
+  durationSeconds,
   children,
 }: MainStageProps) {
   const bgClass =
@@ -30,9 +37,29 @@ export default function MainStage({
     phase === 'trial' || phase === 'synthesis' || phase === 'epilogue' ? 'stage__background--trial' :
     'stage__background--birth';
 
+  const showEffects = !!environment && ['environment', 'evolving', 'trial'].includes(phase);
+  const showEvolvingVisual = phase === 'evolving' && !evolution;
+
   return (
     <div className="stage">
       <div className={`stage__background ${bgClass}`} />
+
+      {/* Environment effects overlay */}
+      {showEffects && (
+        <EnvironmentEffects
+          envTags={environment.envTags}
+          active={showEffects}
+        />
+      )}
+
+      {/* Evolving ink morph visual */}
+      {showEvolvingVisual && (
+        <>
+          <div className="evolving-effect" />
+          <div className="evolving-flash" />
+        </>
+      )}
+
       <div className="stage__content">
         {phase === 'evolving' && evolution ? (
           <div className="evolution">
@@ -56,6 +83,7 @@ export default function MainStage({
                 <WorldScene
                   ref={worldRef}
                   weather="none"
+                  theme="light"
                   creatureSpec={creature.creatureSpec}
                 />
               </div>
@@ -66,6 +94,27 @@ export default function MainStage({
           )
         )}
       </div>
+
+      {/* Environment info banner (replaces modal) */}
+      {phase === 'environment' && environment && (
+        <div className="env-banner">
+          <div className="env-banner__title">{environment.eventName}</div>
+          <div className="env-banner__narrative">{environment.narrative}</div>
+          {onProceed && (
+            <button className="env-banner__proceed" onClick={onProceed}>
+              진화를 지켜본다
+            </button>
+          )}
+          {durationSeconds && (
+            <div className="env-timer">
+              <div
+                className="env-timer__bar"
+                style={{ animationDuration: `${durationSeconds}s` }}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {actionButtons && actionButtons.length > 0 && <ActionButtons buttons={actionButtons} />}
     </div>

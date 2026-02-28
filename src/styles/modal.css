@@ -1,4 +1,4 @@
-/* === Choice Modal (Environment Event) === */
+/* === Choice Modal (Environment Event) — Doodle Style === */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -6,8 +6,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(250, 248, 242, 0.7);
+  backdrop-filter: blur(4px);
   animation: modal-fadein 300ms ease;
 }
 
@@ -22,7 +22,7 @@
   max-height: 85vh;
   overflow-y: auto;
   background: var(--bg-card);
-  border: 1px solid var(--border-light);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
   box-shadow: var(--shadow-lg);
@@ -43,7 +43,7 @@
 .modal__instability {
   font-size: var(--text-sm);
   color: var(--accent-amber);
-  font-family: var(--font-mono);
+  font-family: var(--font-hand-latin);
   margin-bottom: var(--space-lg);
 }
 
@@ -67,6 +67,7 @@
   gap: var(--space-xs);
   padding: var(--space-sm) var(--space-md);
   background: var(--bg-secondary);
+  border: 1px dashed var(--border-light);
   border-radius: var(--radius-sm);
   flex: 1;
 }
@@ -96,6 +97,7 @@
   margin-bottom: var(--space-lg);
   padding: var(--space-md);
   background: var(--bg-secondary);
+  border: 1px dashed var(--border-light);
   border-radius: var(--radius-sm);
 }
 
@@ -116,8 +118,8 @@
   display: flex;
   gap: var(--space-sm);
   padding: var(--space-md);
-  background: rgba(248, 113, 113, 0.08);
-  border: 1px solid rgba(248, 113, 113, 0.15);
+  background: var(--accent-red-dim);
+  border: 1px dashed var(--accent-red);
   border-radius: var(--radius-sm);
   margin-bottom: var(--space-xl);
   font-size: var(--text-sm);
@@ -127,7 +129,7 @@
 
 .modal__divider {
   height: 1px;
-  background: var(--border-subtle);
+  border-top: 1px dashed var(--border-light);
   margin-bottom: var(--space-xl);
 }
 
@@ -136,17 +138,18 @@
   width: 100%;
   padding: var(--space-md);
   background: transparent;
-  border: 1px solid var(--accent-green);
+  border: 2px solid var(--text-primary);
   border-radius: var(--radius-md);
-  color: var(--accent-green);
+  color: var(--text-primary);
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: 700;
+  font-family: var(--font-hand);
   cursor: pointer;
   transition: all var(--transition-fast);
-  font-family: var(--font-sans);
+  box-shadow: var(--shadow-sm);
 }
 
 .modal__observe-btn:hover {
-  background: rgba(74, 222, 128, 0.08);
-  box-shadow: 0 0 12px rgba(74, 222, 128, 0.1);
+  background: var(--text-primary);
+  color: var(--bg-primary);
 }

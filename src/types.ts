@@ -75,6 +75,7 @@ export interface Environment {
   hiddenOpportunity: string;
   visualTone: VisualTone;
   playerAxes: PlayerAxes;
+  durationSeconds: number;
   worldEvents?: PhysicsCommand[];
 }
 

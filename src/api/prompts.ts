@@ -6,9 +6,9 @@ Write in Korean. Respond ONLY with valid JSON, no markdown, no explanation.
 
 Output schema:
 {
-  "name": "한글 이름. 시적이고 독창적으로. 예: 페로-솔라리스, 동면의 하프",
+  "name": "한글 이름. 독창적으로. 예: 페로-솔라리스, 동면의 하프",
   "species": "라틴어풍 학명. 예: Ferro-solaris luminae",
-  "description": "과학 보고서 톤 3줄. 마지막 줄은 감성적 문장.",
+  "description": "과학 보고서 톤 3줄. 담담한 관찰 기록.",
   "traits": ["능력1", "능력2", "능력3"],
   "vulnerabilities": ["약점1", "약점2"],
   "energy_strategy": "에너지 획득 방식 1줄",
@@ -18,7 +18,7 @@ Output schema:
     "resilience": 40~70 사이,
     "structure": 30~90 사이
   },
-  "birth_words": "탄생 순간의 독백 1~2줄. 1인칭. 감성적.",
+  "birth_words": "탄생 순간의 독백 1~2줄. 1인칭. 담담하게.",
   "image_prompt": "이 생명체를 그리기 위한 영어 이미지 프롬프트. 구체적 외형 묘사.",
   "creature_spec": {
     "body": {
@@ -72,7 +72,7 @@ Write in Korean. Respond ONLY with valid JSON. No markdown, no explanation.
 OUTPUT SCHEMA:
 
 {
-  "event_name": "한글 2~5글자. 시적이고 직관적. '고온'(❌) → '유리비'(✅). '산성'(❌) → '부식의 노래'(✅)",
+  "event_name": "한글 2~5글자. 직관적. '고온'(❌) → '유리비'(✅). '산성'(❌) → '부식의 안개'(✅)",
   "cascading_cause": "이 환경 변화의 근본 원인 1문장. 하나의 사건에서 모든 변화가 파생되어야 함.",
   "env_variables": {
     "temperature": "extreme_low | low | normal | high | extreme_high",
@@ -100,6 +100,7 @@ OUTPUT SCHEMA:
     "mood": "영어",
     "key_visual": "한글 1개"
   },
+  "duration_seconds": "10~30 정수. 이벤트의 드라마/심각도에 비례. 빠른 지진=10, 느린 안개=25, 대재앙=30",
   "world_events": [
     { "type": "setGravity", "scale": number },
     { "type": "setWind", "x": number, "y": number },
@@ -139,7 +140,7 @@ Write in Korean. Respond ONLY with valid JSON.
 Output schema:
 {
   "new_name": "진화체 이름. 한글. 부모 이름과 연관되되 변형.",
-  "evolution_summary": "진화 과정 3~4줄. 과학적 톤. 마지막 문장은 감성적.",
+  "evolution_summary": "진화 과정 3~4줄. 과학적 톤. 담담한 관찰 기록.",
   "new_traits": ["새로 획득한 특성 1~2개"],
   "lost_traits": ["잃어버린 특성 0~1개"],
   "tradeoffs": ["'X를 얻었으나 Y를 잃었다' 형식. 최소 1개."],
@@ -150,7 +151,7 @@ Output schema:
     "resilience": 변화량 정수,
     "structure": 변화량 정수
   },
-  "poetic_line": "이 진화를 한 줄로 표현하는 시적 문장",
+  "poetic_line": "이 진화를 한 줄로 요약하는 관찰 기록",
   "image_prompt": "진화된 생명체의 영어 이미지 프롬프트. 부모와의 차이점 강조.",
   "creature_spec_mutation": {
     "body": { "color": "new hex color if changed" },
@@ -185,14 +186,14 @@ Write in Korean. Respond ONLY with valid JSON.
 
 Output schema:
 {
-  "trial_name": "시련 이름. 한글 2~4글자. 시적.",
+  "trial_name": "시련 이름. 한글 2~4글자. 직관적.",
   "trial_description": "어떤 시련인지 1~2줄 묘사.",
   "survived": true 또는 false,
-  "narrative": "시련 과정 3~4줄. 긴장감 있게. 결과를 마지막에 밝힐 것.",
+  "narrative": "시련 과정 3~4줄. 담담한 관찰 기록. 결과를 마지막에 밝힐 것.",
   "reason": "생존/실패의 구체적 이유 1~2줄.",
   "damage_or_mutation": "생존 시: 시련으로 얻은 변이. 실패 시: 최후의 모습.",
   "final_score": 0~100,
-  "epitaph": "이 시련의 결과를 한 줄로 요약. 감성적.",
+  "epitaph": "이 시련의 결과를 한 줄로 요약. 담담하게.",
   "synthesis_hint": "생존 시에만. 다음 합성에서 어떤 종류의 물질이 도움이 될지 암시 1줄.",
   "world_events": [
     { "type": "shake", "intensity": number },
@@ -232,7 +233,7 @@ Output schema:
     "resilience": 변화량,
     "structure": 변화량
   },
-  "fusion_line": "합성을 한 줄로 표현. 시적.",
+  "fusion_line": "합성을 한 줄로 요약. 담담하게.",
   "creature_spec_mutation": {
     "body": { "color": "new hex color reflecting fusion" },
     "eyes": { "variant": "changed if fusion affects perception" },
