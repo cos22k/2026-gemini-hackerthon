@@ -217,10 +217,19 @@ export function CreatureRenderer({ spec, size = 200, className = '' }: CreatureR
       className={className}
       style={{ overflow: 'visible' }}
     >
-      <BodyShape {...body} />
-      <Additions additions={additions} />
-      <Eyes {...eyes} />
-      <Mouth {...mouth} />
+      <defs>
+        {/* Hand-drawn wobble filter — applied to ALL creature elements */}
+        <filter id="creature-wobble" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence type="turbulence" baseFrequency="0.04" numOctaves="3" seed="7" result="wobble" />
+          <feDisplacementMap in="SourceGraphic" in2="wobble" scale="4" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </defs>
+      <g filter="url(#creature-wobble)">
+        <BodyShape {...body} />
+        <Additions additions={additions} />
+        <Eyes {...eyes} />
+        <Mouth {...mouth} />
+      </g>
     </svg>
   );
 }

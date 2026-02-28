@@ -483,7 +483,6 @@ export const WorldScene = forwardRef<WorldSceneHandle, WorldSceneProps>(function
             left: creaturePos.x,
             top: creaturePos.y,
             transform: `translate(-50%, -50%) rotate(${creaturePos.angle}rad)`,
-            filter: 'url(#sketchy)',
           }}
         >
           <div className={`movement-${spec.movement}`}>
