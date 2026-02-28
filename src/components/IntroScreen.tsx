@@ -1,12 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface IntroScreenProps {
   onStart: (k1: string, k2: string) => void;
 }
 
+const DEBUG_KEYWORDS: [string, string] = ['불', '물'];
+
 export default function IntroScreen({ onStart }: IntroScreenProps) {
   const [keyword1, setKeyword1] = useState('');
   const [keyword2, setKeyword2] = useState('');
+  const didSkip = useRef(false);
+
+  // Debug: auto-skip intro with ?debug=skip
+  useEffect(() => {
+    if (didSkip.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('debug') === 'skip') {
+      didSkip.current = true;
+      onStart(DEBUG_KEYWORDS[0], DEBUG_KEYWORDS[1]);
+    }
+  }, [onStart]);
 
   const canStart = keyword1.trim() && keyword2.trim();
 
