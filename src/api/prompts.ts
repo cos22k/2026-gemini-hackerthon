@@ -66,6 +66,15 @@ CORE DESIGN RULES:
 3. CASCADING CAUSE: The event has ONE root cause that cascades into multiple environmental changes. Do not list unrelated threats.
 4. HIDDEN OPPORTUNITY: Every threat conceals a potential advantage. If the creature could adapt to exploit the threat itself, what would it gain?
 5. NEVER 100% LETHAL: Always leave a path to survival, even if narrow.
+6. GENERATION SCALING: 생명체의 세대에 따라 환경 위협 강도를 조절하라.
+   - 세대 1 (chaos 1): 환경은 부드러운 소개여야 한다. "첫 비"이지 "산성 폭풍"이 아니다.
+     극단값 축 1개만 허용. 위협은 눈에 띄지만 파괴적이어선 안 된다.
+   - 세대 2 (chaos 2): 환경이 더 적극적이지만, 생존은 충분히 가능해야 한다.
+   - 세대 3+ (chaos 3~5): 제한 없음. 완전한 위협.
+
+   스탯 반응형 위협 조절:
+   - HP < 60 또는 resilience < 40이면 극단값 축을 1개 줄여라.
+   - structure < 30이면 cataclysmic/volatile tectonics를 피하라.
 
 Write in Korean. Respond ONLY with valid JSON. No markdown, no explanation.
 
@@ -100,7 +109,7 @@ OUTPUT SCHEMA:
     "mood": "영어",
     "key_visual": "한글 1개"
   },
-  "duration_seconds": "10~30 정수. 이벤트의 드라마/심각도에 비례. 빠른 지진=10, 느린 안개=25, 대재앙=30",
+  "duration_seconds": "15~45 정수. 이벤트의 드라마/심각도에 비례. 빠른 지진=15, 느린 안개=30, 대재앙=45. 세대 1에서는 최소 25초.",
   "world_events": [
     { "type": "setGravity", "scale": number },
     { "type": "setWind", "x": number, "y": number },
@@ -118,9 +127,9 @@ world_events 규칙:
 - 최대 5개 커맨드
 
 VARIABLE RULES:
-- env_variables 중 2~3개가 극단값(양 끝)이어야 함.
+- env_variables 극단값 개수: chaos 1→1개, 2→1~2개, 3→2~3개, 4→2~3개, 5→3~4개.
 - 극단값끼리 cascading_cause로 논리적 연결 필수.
-- instability_index 범위: chaos 1→40~55, 2→50~65, 3→60~80, 4→70~90, 5→85~100
+- instability_index 범위: chaos 1→25~40, 2→35~55, 3→50~70, 4→65~85, 5→80~100
 - 이전 환경이 주어지면, 잔존 효과를 narrative에 반영할 것.
 
 DIVERSITY GUIDANCE (직접 복사하지 말고 변형 활용):
@@ -214,7 +223,15 @@ world_events 규칙:
 - 낮은 스탯 (특히 HP, resilience) → 실패 확률 높음
 - 100% 예측 가능하면 안 됨. 의외의 특성이 의외의 방식으로 작동할 수 있음
 - 멸종 시에도 "마지막에 무엇을 남겼는가" 묘사 (포자, 종자, 신호 등)
-- synthesis_hint는 너무 직접적이지 않게, 은유적으로 (예: "더 유연한 무언가가 필요하다")`;
+- synthesis_hint는 너무 직접적이지 않게, 은유적으로 (예: "더 유연한 무언가가 필요하다")
+
+세대별 생존 편향:
+- 세대 1 (chaos 1): 생존 확률 70~80%. 첫 시련은 맛보기다. 약점이 노출되더라도 초기 잠재력을 인정하여 생존 판정. 멸종 시에도 final_score 40 이상.
+- 세대 2 (chaos 2): 생존 확률 55~65%. 도전적이지만 공정하게.
+- 세대 3+ (chaos 3~5): 편향 없음. 특성 vs 약점으로 판정.
+
+스탯 가중 판정:
+- HP > 80 → 생존 보너스. adaptability > 60 → 예상 못한 위협 적응 인정. resilience > 50 → 피해를 버텨냄 고려.`;
 
 export const SYNTHESIS_SYSTEM_PROMPT = `You are an evolutionary fusion engine.
 A creature that survived a trial is now fused with a new material/concept.
@@ -277,6 +294,12 @@ export function buildEnvironmentUserPrompt(
     `chaos_level: ${chaosLevel}`,
   ];
 
+  const totalStats = creature.stats.hp + creature.stats.adaptability +
+    creature.stats.resilience + creature.stats.structure;
+  if (totalStats < 250 || creature.stats.hp < 60) {
+    lines.push(`주의: 이 생명체는 아직 약합니다. 환경 위협을 조절하세요.`);
+  }
+
   if (prevEnv) {
     lines.push('');
     lines.push(`이전 환경: ${prevEnv.eventName}`);
@@ -325,6 +348,13 @@ export function buildTrialUserPrompt(
     '',
     `chaos_level: ${chaosLevel}`,
   ];
+
+  const totalStats = creature.stats.hp + creature.stats.adaptability +
+    creature.stats.resilience + creature.stats.structure;
+  lines.push(`스탯 합계: ${totalStats}`);
+  if ((creature.generation ?? 1) <= 2) {
+    lines.push(`참고: 초기 세대 생명체입니다. 성장 잠재력을 고려하세요.`);
+  }
 
   return lines.join('\n');
 }

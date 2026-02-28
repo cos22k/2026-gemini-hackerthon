@@ -7,17 +7,17 @@ function sleep(ms: number): Promise<void> {
 export async function executeWorldEvents(
   dispatch: (cmd: PhysicsCommand) => number | null,
   events: PhysicsCommand[],
-  delayMs = 300,
+  delayMs = 600,
 ): Promise<void> {
   for (const event of events) {
     dispatch(event);
 
     // Shake gets extra pause for the visual to settle
     if (event.type === 'shake') {
-      await sleep(delayMs + 400);
+      await sleep(delayMs + 600);
     } else if (event.type === 'addBody') {
-      // Rapid-fire for multiple bodies
-      await sleep(delayMs * 0.5);
+      // Slightly staggered for multiple bodies
+      await sleep(delayMs * 0.6);
     } else {
       await sleep(delayMs);
     }

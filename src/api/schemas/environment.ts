@@ -45,7 +45,7 @@ export function parseEnvironmentResponse(raw: unknown): Environment {
       keyVisual: p.visual_tone.key_visual,
     },
     playerAxes: convertToPlayerAxes(envVariables),
-    durationSeconds: Math.max(10, Math.min(30, p.duration_seconds)),
+    durationSeconds: Math.max(15, Math.min(45, p.duration_seconds)),
     worldEvents: normalizeWorldEvents(p.world_events),
   };
 }

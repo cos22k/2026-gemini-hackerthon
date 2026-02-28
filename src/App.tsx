@@ -110,6 +110,16 @@ function GamePage() {
       type: "environment",
       title: env.eventName,
       summary: `불안정 지수 ${env.instabilityIndex}`,
+      detail: {
+        narrative: env.narrative,
+        sensory: { ...env.sensory },
+        threatCategory: env.threatCategory,
+        cascadingCause: env.cascadingCause,
+        hiddenOpportunity: env.hiddenOpportunity,
+        threatDetail: env.threatDetail,
+        envTags: [...env.envTags],
+        instabilityIndex: env.instabilityIndex,
+      },
     };
     setHistory((prev) => [...prev, envEvent]);
     persistEvent(envEvent);
@@ -155,13 +165,24 @@ function GamePage() {
       type: "birth",
       title: "탄생",
       summary: `${newCreature.name} — ${k1} × ${k2}`,
+      detail: {
+        species: newCreature.species,
+        stats: { ...newCreature.stats },
+        traits: [...newCreature.traits],
+        vulnerabilities: [...newCreature.vulnerabilities],
+        description: newCreature.description,
+        energyStrategy: newCreature.energyStrategy,
+      },
     };
     setHistory([birthEvent]);
     persistEvent(birthEvent);
 
-    // Show creature on stage (no loading overlay), generate env in background
+    // Show creature on stage (no loading overlay), calm period before environment
     setLoading(false);
     setPhase("birth");
+
+    // Let the user admire their creature before the environment kicks in
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     const env = await generateEnvironment(
       newCreature,
@@ -227,10 +248,19 @@ function GamePage() {
     };
     setCreature(evolvedCreature);
 
+    const tradeoffText = evo.tradeoffs.length > 0 ? `\n${evo.tradeoffs.join(' / ')}` : '';
     const evoEvent: HistoryEvent = {
       type: "evolution",
       title: evo.newName,
-      summary: evo.poeticLine,
+      summary: `${evo.poeticLine}${tradeoffText}`,
+      detail: {
+        newTraits: [...evo.newTraits],
+        lostTraits: [...evo.lostTraits],
+        tradeoffs: [...evo.tradeoffs],
+        adaptationScore: evo.adaptationScore,
+        statChanges: { ...evo.statChanges },
+        evolutionSummary: evo.evolutionSummary,
+      },
     };
     setHistory((prev) => [...prev, evoEvent]);
     persistEvent(evoEvent);
@@ -256,6 +286,15 @@ function GamePage() {
           summary: trialResult.survived
             ? `생존 — 점수 ${trialResult.finalScore}`
             : `멸종 — 점수 ${trialResult.finalScore}`,
+          detail: {
+            narrative: trialResult.narrative,
+            reason: trialResult.reason,
+            damageOrMutation: trialResult.damageOrMutation,
+            survived: trialResult.survived,
+            finalScore: trialResult.finalScore,
+            epitaph: trialResult.epitaph,
+            trialDescription: trialResult.trialDescription,
+          },
         };
         setHistory((prev) => [...prev, trialEvent]);
         persistEvent(trialEvent);
@@ -264,7 +303,7 @@ function GamePage() {
       } else {
         setLoading(false);
       }
-    }, 2000);
+    }, 4000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [round]);
 
@@ -319,6 +358,11 @@ function GamePage() {
         type: "synthesis",
         title: `+${keyword}`,
         summary: result.fusionLine,
+        detail: {
+          fusionNarrative: result.fusionNarrative,
+          newTraits: [...result.newTraits],
+          statChanges: { ...result.statChanges },
+        },
       };
       setHistory((prev) => [...prev, synthEvent]);
       persistEvent(synthEvent);
@@ -328,9 +372,12 @@ function GamePage() {
       setEvolution(null);
       setTrial(null);
 
-      // Show creature on stage while env generates
+      // Show creature on stage, calm period before next environment
       setPhase("birth");
       setLoading(false);
+
+      // Let the user enjoy the synthesized creature before next round
+      await new Promise((resolve) => setTimeout(resolve, 4000));
 
       const env = await generateEnvironment(
         synthesizedCreature,
@@ -359,8 +406,10 @@ function GamePage() {
     };
     setCreature(nextCreature);
 
-    // Show creature on stage while env generates
+    // Show creature on stage, calm period before next environment
     setPhase("birth");
+
+    await new Promise((resolve) => setTimeout(resolve, 4000));
 
     const env = await generateEnvironment(
       nextCreature,

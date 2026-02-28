@@ -106,10 +106,64 @@ export interface TrialResult {
   worldEvents?: PhysicsCommand[];
 }
 
+// History event detail types
+export interface BirthDetail {
+  species: string;
+  stats: Stats;
+  traits: string[];
+  vulnerabilities: string[];
+  description: string;
+  energyStrategy?: string;
+}
+
+export interface EnvironmentDetail {
+  narrative: string;
+  sensory: Sensory;
+  threatCategory: string;
+  cascadingCause: string;
+  hiddenOpportunity: string;
+  threatDetail: string;
+  envTags: string[];
+  instabilityIndex: number;
+}
+
+export interface EvolutionDetail {
+  newTraits: string[];
+  lostTraits: string[];
+  tradeoffs: string[];
+  adaptationScore: number;
+  statChanges: Stats;
+  evolutionSummary: string;
+}
+
+export interface TrialDetail {
+  narrative: string;
+  reason: string;
+  damageOrMutation: string;
+  survived: boolean;
+  finalScore: number;
+  epitaph: string;
+  trialDescription: string;
+}
+
+export interface SynthesisDetail {
+  fusionNarrative: string;
+  newTraits: string[];
+  statChanges: Stats;
+}
+
+export type HistoryEventDetail =
+  | BirthDetail
+  | EnvironmentDetail
+  | EvolutionDetail
+  | TrialDetail
+  | SynthesisDetail;
+
 export interface HistoryEvent {
   type: string;
   title: string;
   summary: string;
+  detail?: HistoryEventDetail;
 }
 
 export interface ActionButton {

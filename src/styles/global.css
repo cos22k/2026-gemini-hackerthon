@@ -41,9 +41,9 @@
   --space-2xl: 48px;
   --space-3xl: 64px;
 
-  /* Typography — Handwritten */
-  --font-hand: 'Nanum Pen Script', 'Caveat', cursive;
-  --font-hand-latin: 'Caveat', 'Nanum Pen Script', cursive;
+  /* Typography */
+  --font-hand: 'Gamja Flower', cursive;
+  --font-hand-latin: 'Gamja Flower', cursive;
   --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 

@@ -56,6 +56,7 @@ export async function saveGameEvent(
     type: event.type,
     title: event.title,
     summary: event.summary,
+    detail: event.detail ?? null,
     fullData: event.fullData ?? null,
     timestamp: serverTimestamp(),
   });
