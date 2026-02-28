@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { statsSchema, specMutationSchema, worldEventSchema, normalizeWorldEvents } from './shared';
+import { statsSchema, specMutationSchema, worldEventSchema, normalizeWorldEvents, toGeminiSchema } from './shared';
 import type { SynthesisResult } from '../../game/types';
 
 export const synthesisApiSchema = z.object({
@@ -15,7 +14,7 @@ export const synthesisApiSchema = z.object({
   world_events: z.array(worldEventSchema).optional(),
 });
 
-export const synthesisJsonSchema = zodToJsonSchema(synthesisApiSchema);
+export const synthesisJsonSchema = toGeminiSchema(synthesisApiSchema);
 
 export function parseSynthesisResponse(raw: unknown): SynthesisResult {
   const p = synthesisApiSchema.parse(raw);

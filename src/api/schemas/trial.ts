@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { worldEventSchema, normalizeWorldEvents } from './shared';
+import { worldEventSchema, normalizeWorldEvents, toGeminiSchema } from './shared';
 import type { TrialResult } from '../../types';
 
 export const trialApiSchema = z.object({
@@ -16,7 +15,7 @@ export const trialApiSchema = z.object({
   world_events: z.array(worldEventSchema).optional(),
 });
 
-export const trialJsonSchema = zodToJsonSchema(trialApiSchema);
+export const trialJsonSchema = toGeminiSchema(trialApiSchema);
 
 export function parseTrialResponse(raw: unknown): TrialResult {
   const p = trialApiSchema.parse(raw);

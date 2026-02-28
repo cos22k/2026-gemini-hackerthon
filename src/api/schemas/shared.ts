@@ -1,6 +1,26 @@
 import { z } from 'zod';
+import type { ZodType } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { CreatureSpec } from '../../world/types';
 import type { PhysicsCommand } from '../../world/types';
+
+// ── Gemini-compatible JSON schema helper ─────────────────
+// Strips $schema and additionalProperties which Gemini doesn't support
+
+function stripUnsupported(obj: unknown): unknown {
+  if (Array.isArray(obj)) return obj.map(stripUnsupported);
+  if (typeof obj !== 'object' || obj === null) return obj;
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (key === '$schema' || key === 'additionalProperties') continue;
+    result[key] = stripUnsupported(value);
+  }
+  return result;
+}
+
+export function toGeminiSchema(schema: ZodType): Record<string, unknown> {
+  return stripUnsupported(zodToJsonSchema(schema)) as Record<string, unknown>;
+}
 
 // ── Reusable sub-schemas ─────────────────────────────────
 

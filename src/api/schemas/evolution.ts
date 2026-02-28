@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { statsSchema, specMutationSchema, worldEventSchema, normalizeWorldEvents } from './shared';
+import { statsSchema, specMutationSchema, worldEventSchema, normalizeWorldEvents, toGeminiSchema } from './shared';
 import type { EvolutionResult } from '../../types';
 
 export const evolutionApiSchema = z.object({
@@ -17,7 +16,7 @@ export const evolutionApiSchema = z.object({
   world_events: z.array(worldEventSchema).optional(),
 });
 
-export const evolutionJsonSchema = zodToJsonSchema(evolutionApiSchema);
+export const evolutionJsonSchema = toGeminiSchema(evolutionApiSchema);
 
 export function parseEvolutionResponse(raw: unknown): EvolutionResult {
   const p = evolutionApiSchema.parse(raw);

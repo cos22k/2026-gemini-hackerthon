@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { statsSchema, creatureSpecSchema, normalizeCreatureSpec } from './shared';
+import { statsSchema, creatureSpecSchema, normalizeCreatureSpec, toGeminiSchema } from './shared';
 import type { Creature } from '../../types';
 
 export const creatureApiSchema = z.object({
@@ -16,7 +15,7 @@ export const creatureApiSchema = z.object({
   creature_spec: creatureSpecSchema.optional(),
 });
 
-export const creatureJsonSchema = zodToJsonSchema(creatureApiSchema);
+export const creatureJsonSchema = toGeminiSchema(creatureApiSchema);
 
 export function parseCreatureResponse(raw: unknown): Creature {
   const p = creatureApiSchema.parse(raw);

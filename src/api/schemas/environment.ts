@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { envVariablesSchema, sensorySchema, visualToneSchema, worldEventSchema, normalizeWorldEvents } from './shared';
+import { envVariablesSchema, sensorySchema, visualToneSchema, worldEventSchema, normalizeWorldEvents, toGeminiSchema } from './shared';
 import type { Environment, EnvVariables } from '../../types';
 import { convertToPlayerAxes } from '../../game/environment';
 
@@ -22,7 +21,7 @@ export const environmentApiSchema = z.object({
   world_events: z.array(worldEventSchema).optional(),
 });
 
-export const environmentJsonSchema = zodToJsonSchema(environmentApiSchema);
+export const environmentJsonSchema = toGeminiSchema(environmentApiSchema);
 
 export function parseEnvironmentResponse(raw: unknown): Environment {
   const p = environmentApiSchema.parse(raw);
