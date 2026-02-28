@@ -15,6 +15,9 @@
 .world-creature {
   position: absolute;
   z-index: 5;
+  will-change: transform;
+  transition: left 0.12s cubic-bezier(0.25, 0.1, 0.25, 1),
+              top 0.12s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 /* ── Planet (Little Prince style) ─────────────── */
@@ -23,6 +26,7 @@
   transform: translate(-50%, -50%);
   z-index: 1;
   pointer-events: none;
+  filter: url(#sketchy);
 }
 
 /* ── Physics bodies ────────────────────────────── */
@@ -32,6 +36,7 @@
   pointer-events: none;
   will-change: transform;
   filter: url(#sketchy);
+  transition: left 0.08s linear, top 0.08s linear;
 }
 
 /* ── Weather: Sun (ink doodle, dark-adapted) ───── */
@@ -136,57 +141,139 @@
   }
 }
 
-/* ── Movement animations ───────────────────────── */
+/* ── Smooth organic easing ─────────────────────── */
+/* All creature animations use this soft sine-like curve — never snaps */
+
+/* ── Breathing pulse (always-on subtle life sign) ─ */
+.movement-waddle,
+.movement-bounce,
+.movement-drift,
+.movement-hop {
+  animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); /* sine ease */
+  animation-fill-mode: both;
+}
+
 .movement-waddle {
-  animation: waddle 1s ease-in-out infinite;
+  animation: waddle 3.2s cubic-bezier(0.37, 0, 0.63, 1) infinite,
+             breathe 4s cubic-bezier(0.37, 0, 0.63, 1) infinite;
 }
 
 .movement-bounce {
-  animation: bounce 0.6s ease-in-out infinite;
+  animation: bounce 2.8s cubic-bezier(0.37, 0, 0.63, 1) infinite,
+             breathe 4s cubic-bezier(0.37, 0, 0.63, 1) infinite;
 }
 
 .movement-drift {
-  animation: drift 3s ease-in-out infinite;
+  animation: drift 5s cubic-bezier(0.37, 0, 0.63, 1) infinite,
+             breathe 4.5s cubic-bezier(0.37, 0, 0.63, 1) infinite;
 }
 
 .movement-hop {
-  animation: hop 0.8s ease-in-out infinite;
+  animation: hop 3s cubic-bezier(0.37, 0, 0.63, 1) infinite,
+             breathe 4s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scaleX(1) scaleY(1); }
+  40%      { transform: scaleX(1.02) scaleY(0.98); }
+  60%      { transform: scaleX(0.99) scaleY(1.015); }
 }
 
 @keyframes waddle {
-  0%, 100% { transform: rotate(0deg); }
-  25%      { transform: rotate(-5deg); }
-  75%      { transform: rotate(5deg); }
+  0%       { transform: rotate(0deg); }
+  20%      { transform: rotate(-2.5deg); }
+  40%      { transform: rotate(0.5deg); }
+  60%      { transform: rotate(2.5deg); }
+  80%      { transform: rotate(-0.5deg); }
+  100%     { transform: rotate(0deg); }
 }
 
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-12px); }
+  35%      { transform: translateY(-6px); }
+  65%      { transform: translateY(-2px); }
 }
 
 @keyframes drift {
-  0%, 100% { transform: translateX(0); }
-  50%      { transform: translateX(10px); }
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  30%      { transform: translateX(5px) rotate(0.8deg); }
+  70%      { transform: translateX(-3px) rotate(-0.5deg); }
 }
 
 @keyframes hop {
   0%, 100% { transform: translateY(0) scaleY(1); }
-  30%      { transform: translateY(-15px) scaleY(1.05); }
-  50%      { transform: translateY(0) scaleY(0.95); }
-  65%      { transform: translateY(-3px) scaleY(1); }
+  25%      { transform: translateY(-8px) scaleY(1.02); }
+  45%      { transform: translateY(0) scaleY(0.97); }
+  60%      { transform: translateY(-2px) scaleY(1); }
 }
 
-/* ── Googly pupil bounce ───────────────────────── */
-@keyframes pupil-bounce {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  20%      { transform: translate(2px, -1.5px) rotate(8deg); }
-  40%      { transform: translate(-1.5px, 2px) rotate(-5deg); }
-  60%      { transform: translate(1.5px, 0.5px) rotate(10deg); }
-  80%      { transform: translate(-2px, -1px) rotate(-3deg); }
+/* ── Creature dead state ──────────────────────── */
+.creature--dead {
+  transition: transform 2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Stop movement animations when dead */
+.movement--dead {
+  animation: none !important;
+}
+
+/* ── Limb walking animation ──────────────────── */
+.creature-limbs {
+  transform-origin: center center;
+}
+
+.creature-limb--leg {
+  animation: leg-walk 2.6s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  transform-origin: top center;
+}
+
+.creature-limb--leg:nth-child(odd) {
+  animation-delay: -1.3s;
+}
+
+.creature-limb--arm {
+  animation: arm-swing 3.4s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  transform-origin: top center;
+}
+
+.creature-limb--arm:nth-child(odd) {
+  animation-delay: -1.7s;
+}
+
+@keyframes leg-walk {
+  0%       { transform: rotate(0deg); }
+  15%      { transform: rotate(-5deg); }
+  35%      { transform: rotate(1deg); }
+  55%      { transform: rotate(5deg); }
+  75%      { transform: rotate(-1deg); }
+  100%     { transform: rotate(0deg); }
+}
+
+@keyframes arm-swing {
+  0%       { transform: rotate(0deg); }
+  25%      { transform: rotate(5deg); }
+  50%      { transform: rotate(0deg); }
+  75%      { transform: rotate(-4deg); }
+  100%     { transform: rotate(0deg); }
+}
+
+.creature--dead .creature-limb--leg,
+.creature--dead .creature-limb--arm {
+  animation: none;
+  transition: transform 2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Googly pupil float ──────────────────────── */
+@keyframes pupil-float {
+  0%, 100% { transform: translate(0, 0); }
+  20%      { transform: translate(1.5px, -1px); }
+  40%      { transform: translate(-1px, 0.5px); }
+  60%      { transform: translate(0.5px, 1px); }
+  80%      { transform: translate(-1.5px, -0.5px); }
 }
 
 .googly-pupil {
-  animation: pupil-bounce 2.5s ease-in-out infinite;
+  animation: pupil-float 4s cubic-bezier(0.37, 0, 0.63, 1) infinite;
 }
 
 /* ═══════════════════════════════════════════════

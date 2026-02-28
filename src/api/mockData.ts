@@ -23,6 +23,12 @@ export const MOCK_CREATURE: Creature = {
     eyes: { variant: 'cute', size: 20, spacing: 36, offsetY: -15, count: 2 },
     mouth: { variant: 'smile', width: 20, offsetY: 15 },
     additions: [],
+    limbs: [
+      { type: 'leg', anchorX: -0.5, anchorY: 0.85, length: 32, width: 7, color: '#d4533b', restAngle: -18 },
+      { type: 'leg', anchorX: 0.5, anchorY: 0.85, length: 32, width: 7, color: '#d4533b', restAngle: 18 },
+      { type: 'arm', anchorX: -0.9, anchorY: 0.0, length: 22, width: 5, color: '#e8825a', restAngle: -35 },
+      { type: 'arm', anchorX: 0.9, anchorY: 0.0, length: 22, width: 5, color: '#e8825a', restAngle: 35 },
+    ],
     movement: 'waddle',
   },
 };
@@ -57,6 +63,7 @@ export const MOCK_ENVIRONMENT: Environment = {
     keyVisual: '심해 열수 분출',
   },
   playerAxes: { energy: 'HIGH', physical: 'HIGH', purity: 'LOW' },
+  durationSeconds: 5,
   worldEvents: [
     { type: 'setGravity', scale: 1.2 },
     { type: 'addBody', bodyType: 'stone', x: 200, y: 300 },

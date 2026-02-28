@@ -49,11 +49,28 @@ export interface AdditionSpec {
   props?: Record<string, unknown>;
 }
 
+export interface LimbSpec {
+  type: 'leg' | 'arm';
+  /** Horizontal anchor on body (-1 = left edge, 1 = right edge) */
+  anchorX: number;
+  /** Vertical anchor on body (-1 = top, 1 = bottom) */
+  anchorY: number;
+  /** Length in px (20-60) */
+  length: number;
+  /** Width/thickness in px (4-12) */
+  width: number;
+  /** Fill color */
+  color: string;
+  /** Rest angle in degrees relative to down (0 = straight down, negative = splayed out) */
+  restAngle: number;
+}
+
 export interface CreatureSpec {
   body: BodySpec;
   eyes: EyeSpec;
   mouth: MouthSpec;
   additions: AdditionSpec[];
+  limbs: LimbSpec[];
   movement: 'waddle' | 'bounce' | 'drift' | 'hop';
 }
 

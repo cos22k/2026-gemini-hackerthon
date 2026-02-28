@@ -169,7 +169,7 @@ const CRATERS = [
 function Planet({ palette }: { palette: ThemePalette }) {
   const R = PLANET_R;
   const svgSize = R * 2 + 20;
-  const planetPath = wobblyCirclePath(R, 42, 64, 0.03);
+  const planetPath = wobblyCirclePath(R, 42, 512, 0.005);
 
   return (
     <div
@@ -366,6 +366,10 @@ const DEFAULT_SPEC: CreatureSpec = {
   eyes: { variant: 'dot', size: 18, spacing: 36, offsetY: -15, count: 2 },
   mouth: { variant: 'smile', width: 20, offsetY: 15 },
   additions: [],
+  limbs: [
+    { type: 'leg', anchorX: -0.4, anchorY: 0.9, length: 30, width: 6, color: '#222', restAngle: -15 },
+    { type: 'leg', anchorX: 0.4, anchorY: 0.9, length: 30, width: 6, color: '#222', restAngle: 15 },
+  ],
   movement: 'waddle',
 };
 
@@ -380,6 +384,8 @@ export interface WorldSceneProps {
   atmosphereColor?: string;
   /** Atmosphere opacity 0-1 */
   atmosphereOpacity?: number;
+  /** Whether the creature is dead (flipped, X eyes, no upright torque) */
+  isDead?: boolean;
 }
 
 export interface WorldSceneHandle {
@@ -388,12 +394,12 @@ export interface WorldSceneHandle {
 }
 
 export const WorldScene = forwardRef<WorldSceneHandle, WorldSceneProps>(function WorldScene(
-  { weather = 'none', creatureSpec, creatureSize = 220, theme = 'dark', atmosphereColor, atmosphereOpacity = 0.15 },
+  { weather = 'none', creatureSpec, creatureSize = 220, theme = 'dark', atmosphereColor, atmosphereOpacity = 0.15, isDead = false },
   ref,
 ) {
   const spec = creatureSpec ?? DEFAULT_SPEC;
   const palette = PALETTES[theme];
-  const { bodies, creaturePos, dispatch, getWorldParams } = usePhysicsWorld();
+  const { bodies, creaturePos, dispatch, getWorldParams } = usePhysicsWorld(isDead);
 
   const getWorldState = useCallback((): WorldSnapshot => {
     const params = getWorldParams();
@@ -404,29 +410,46 @@ export const WorldScene = forwardRef<WorldSceneHandle, WorldSceneProps>(function
 
   const WeatherComp = WeatherEffects[weather] ?? null;
 
-  // ── Camera follow: smooth offset to keep creature visible ──
+  // ── Camera follow: always center creature ──
   const cameraRef = useRef({ x: 0, y: 0 });
+  const initializedRef = useRef(false);
   const [camera, setCamera] = useState({ x: 0, y: 0 });
 
+  // Camera framing: creature at horizontal center, vertical 65% from top
+  // (shows more sky above, planet surface below — natural ground-based framing)
+  const FRAME_X = CANVAS.width / 2;
+  const FRAME_Y = CANVAS.height * 0.65;
+
+  // Snap camera to creature on first render / recalibration
   useEffect(() => {
-    // Target: creature centered in viewport
-    const targetX = CANVAS.width / 2 - creaturePos.x;
-    const targetY = CANVAS.height / 2 - creaturePos.y;
-    // Smooth lerp toward target
+    const targetX = FRAME_X - creaturePos.x;
+    const targetY = FRAME_Y - creaturePos.y;
+
+    if (!initializedRef.current) {
+      cameraRef.current = { x: targetX, y: targetY };
+      setCamera({ x: targetX, y: targetY });
+      initializedRef.current = true;
+      return;
+    }
+
     const lerp = 0.08;
     const cam = cameraRef.current;
     const newX = cam.x + (targetX - cam.x) * lerp;
     const newY = cam.y + (targetY - cam.y) * lerp;
-    // Only apply offset when creature strays from the default resting zone
-    // (deadzone: no offset when creature is near center of canvas)
-    const DEADZONE = 80;
-    const dx = Math.abs(targetX);
-    const dy = Math.abs(targetY);
-    const applyX = dx > DEADZONE ? newX : newX * 0.5;
-    const applyY = dy > DEADZONE ? newY : newY * 0.5;
-    cameraRef.current = { x: applyX, y: applyY };
-    setCamera({ x: applyX, y: applyY });
+    cameraRef.current = { x: newX, y: newY };
+    setCamera({ x: newX, y: newY });
   }, [creaturePos.x, creaturePos.y]);
+
+  // Recalibrate: snap camera when creature spec changes (evolution/synthesis)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const targetX = FRAME_X - creaturePos.x;
+      const targetY = FRAME_Y - creaturePos.y;
+      cameraRef.current = { x: targetX, y: targetY };
+      setCamera({ x: targetX, y: targetY });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [creatureSpec]);
 
   return (
     <div className="world-canvas" style={{ width: CANVAS.width, height: CANVAS.height }}>
@@ -464,6 +487,7 @@ export const WorldScene = forwardRef<WorldSceneHandle, WorldSceneProps>(function
         className="world-camera"
         style={{
           transform: `translate(${camera.x}px, ${camera.y}px)`,
+          transition: 'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
           position: 'absolute',
           inset: 0,
         }}
@@ -485,8 +509,8 @@ export const WorldScene = forwardRef<WorldSceneHandle, WorldSceneProps>(function
             transform: `translate(-50%, -50%) rotate(${creaturePos.angle}rad)`,
           }}
         >
-          <div className={`movement-${spec.movement}`}>
-            <CreatureRenderer spec={spec} size={creatureSize} />
+          <div className={`movement-${spec.movement}${isDead ? ' movement--dead' : ''}`}>
+            <CreatureRenderer spec={spec} size={creatureSize} isDead={isDead} />
           </div>
         </div>
       </div>

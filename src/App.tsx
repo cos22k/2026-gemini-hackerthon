@@ -28,7 +28,7 @@ import { getChaosLevel } from "./game/environment";
 import { executeWorldEvents } from "./game/worldEventExecutor";
 import { normalizeCreatureSpec } from "./api/schemas";
 import { useAuth } from "./lib/auth";
-import { createSession, saveGameEvent } from "./game/firestorePersistence";
+import { createSession, saveGameEvent, saveGameState } from "./game/firestorePersistence";
 
 function mergeCreatureSpec(
   current: CreatureSpec | undefined,
@@ -41,6 +41,7 @@ function mergeCreatureSpec(
     eyes: { ...base.eyes, ...mutation.eyes },
     mouth: { ...base.mouth, ...mutation.mouth },
     additions: mutation.additions ?? base.additions,
+    limbs: mutation.limbs ?? base.limbs,
     movement: mutation.movement ?? base.movement,
   } as Record<string, unknown>);
 }
@@ -105,8 +106,32 @@ function GamePage() {
   };
 
   const persistEvent = async (event: HistoryEvent) => {
-    if (uid && sessionId) {
-      saveGameEvent(uid, sessionId, event).catch(console.error);
+    const currentUid = uidRef.current;
+    const currentSessionId = sessionIdRef.current;
+    if (currentUid && currentSessionId) {
+      saveGameEvent(currentUid, currentSessionId, event).catch(console.error);
+    }
+  };
+
+  const persistState = (phaseOverride?: string) => {
+    const currentUid = uidRef.current;
+    const currentSessionId = sessionIdRef.current;
+    if (currentUid && currentSessionId) {
+      saveGameState(currentUid, currentSessionId, {
+        phase: (phaseOverride ?? phase) as import("./game/types").GamePhase,
+        round,
+        chaosLevel: getChaosLevel(round),
+        creature: creatureRef.current as import("./game/types").GameCreature | null,
+        environment: null,
+        evolution: null,
+        trial: null,
+        history: [],
+        synthesisHistory: [],
+        loading: false,
+        loadingMessage: "",
+        error: null,
+        sessionId: currentSessionId,
+      }).catch(console.error);
     }
   };
 
@@ -137,8 +162,8 @@ function GamePage() {
     // Auto-proceed after AI-decided duration
     if (envTimerRef.current) clearTimeout(envTimerRef.current);
     envTimerRef.current = setTimeout(() => {
-      handleProceedFromEnvironment();
-    }, env.durationSeconds * 1000);
+      proceedRef.current();
+    }, (env.durationSeconds ?? 10) * 1000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -155,7 +180,10 @@ function GamePage() {
     // Create Firestore session
     if (uid) {
       const sid = await createSession(uid).catch(() => null);
-      if (sid) setSessionId(sid);
+      if (sid) {
+        setSessionId(sid);
+        sessionIdRef.current = sid;
+      }
     }
 
     const newCreature = await generateCreature(k1, k2);
@@ -168,6 +196,7 @@ function GamePage() {
     }
 
     setCreature(newCreature);
+    creatureRef.current = newCreature;
     const birthEvent: HistoryEvent = {
       type: "birth",
       title: "탄생",
@@ -187,6 +216,7 @@ function GamePage() {
     // Show creature on stage (no loading overlay), calm period before environment
     setLoading(false);
     setPhase("birth");
+    persistState("birth");
 
     // Let the user admire their creature before the environment kicks in
     await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -311,6 +341,12 @@ function GamePage() {
   creatureRef.current = creature;
   const environmentRef = useRef(environment);
   environmentRef.current = environment;
+  const uidRef = useRef(uid);
+  uidRef.current = uid;
+  const sessionIdRef = useRef(sessionId);
+  sessionIdRef.current = sessionId;
+  const proceedRef = useRef(handleProceedFromEnvironment);
+  proceedRef.current = handleProceedFromEnvironment;
 
   const handleSynthesis = async (keyword: string) => {
     if (!creature || !trial) return;
@@ -432,7 +468,11 @@ function GamePage() {
   };
 
   if (phase === "intro") {
-    return <IntroScreen onStart={handleStart} />;
+    return (
+      <IntroScreen
+        onStart={handleStart}
+      />
+    );
   }
 
   const actionButtons: ActionButton[] = [];
@@ -485,6 +525,7 @@ function GamePage() {
         worldRef={worldRef}
         onProceed={handleProceedFromEnvironment}
         durationSeconds={environment?.durationSeconds}
+        isDead={phase === 'epilogue' && trial?.survived === false}
       >
         {phase === "epilogue" && trial && (
           <EpilogueView

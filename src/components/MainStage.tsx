@@ -13,6 +13,7 @@ interface MainStageProps {
   worldRef?: RefObject<WorldSceneHandle | null>;
   onProceed?: () => void;
   durationSeconds?: number;
+  isDead?: boolean;
   children?: ReactNode;
 }
 
@@ -25,6 +26,7 @@ export default function MainStage({
   worldRef,
   onProceed,
   durationSeconds,
+  isDead = false,
   children,
 }: MainStageProps) {
   const bgClass =
@@ -85,6 +87,7 @@ export default function MainStage({
                   creatureSpec={creature.creatureSpec}
                   atmosphereColor={envAtmosphereColor}
                   atmosphereOpacity={showEffects ? 0.2 : 0}
+                  isDead={isDead}
                 />
               </div>
               {phase === 'birth' && creature.birthWords && (

@@ -1,8 +1,17 @@
 import { EMOJI_CATEGORIES } from "../game/emojiCategories";
 import { useState, useEffect, useRef } from "react";
 
+interface PreviousSession {
+  id: string;
+  createdAt: Date;
+  phase: string;
+  creature: string | null;
+}
+
 interface IntroScreenProps {
   onStart: (k1: string, k2: string) => void;
+  onContinue?: (sessionId: string) => void;
+  previousSessions?: PreviousSession[];
 }
 
 const DEBUG_KEYWORDS: [string, string] = ["불", "물"];

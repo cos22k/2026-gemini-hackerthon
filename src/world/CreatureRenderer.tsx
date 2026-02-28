@@ -1,4 +1,4 @@
-import type { BodySpec, EyeSpec, MouthSpec, AdditionSpec } from './types';
+import type { BodySpec, EyeSpec, MouthSpec, AdditionSpec, LimbSpec } from './types';
 
 // ── Gemini star path (4-pointed concave star) ────────────
 function geminiStarPath(r: number): string {
@@ -13,6 +13,22 @@ function eyePositions(count: number, spacing: number): number[] {
     const total = gap * (count - 1);
     return -total / 2 + i * gap;
   });
+}
+
+// ── Dead eyes (X X) ─────────────────────────────────────
+function DeadEyes({ size = 18, spacing = 36, offsetY = -15, count = 2 }: Partial<EyeSpec>) {
+  const positions = eyePositions(count, spacing);
+  const s = size * 0.6;
+  return (
+    <g className="eyes eyes--dead">
+      {positions.map((cx, i) => (
+        <g key={i}>
+          <line x1={cx - s} y1={offsetY - s} x2={cx + s} y2={offsetY + s} stroke="#222" strokeWidth={3} strokeLinecap="round" />
+          <line x1={cx + s} y1={offsetY - s} x2={cx - s} y2={offsetY + s} stroke="#222" strokeWidth={3} strokeLinecap="round" />
+        </g>
+      ))}
+    </g>
+  );
 }
 
 // ── Eye variants ──────────────────────────────────────────
@@ -62,7 +78,8 @@ function CuteEyes({ size = 14, spacing = 34, offsetY = -15, count = 2 }: Partial
   );
 }
 
-function Eyes({ variant = 'googly', ...props }: Partial<EyeSpec>) {
+function Eyes({ variant = 'googly', isDead = false, ...props }: Partial<EyeSpec> & { isDead?: boolean }) {
+  if (isDead) return <DeadEyes {...props} />;
   const variants: Record<string, React.FC<Partial<EyeSpec>>> = {
     googly: GooglyEyes,
     dot: DotEyes,
@@ -155,6 +172,51 @@ function BodyShape({
   }
 }
 
+// ── Limbs renderer ───────────────────────────────────────
+function Limbs({ limbs = [], bodyWidth = 120, bodyHeight = 100 }: { limbs?: LimbSpec[]; bodyWidth?: number; bodyHeight?: number }) {
+  if (!limbs.length) return null;
+  const hw = bodyWidth / 2;
+  const hh = bodyHeight / 2;
+
+  return (
+    <g className="creature-limbs">
+      {limbs.map((limb, i) => {
+        // Convert normalized anchor (-1..1) to pixel position on body edge
+        const anchorPx = limb.anchorX * hw;
+        const anchorPy = limb.anchorY * hh;
+        const angleRad = (limb.restAngle ?? 0) * Math.PI / 180;
+        const endX = anchorPx + Math.sin(angleRad) * limb.length;
+        const endY = anchorPy + Math.cos(angleRad) * limb.length;
+        // Wobbly limb path with slight curve
+        const midX = (anchorPx + endX) / 2 + (limb.type === 'arm' ? (limb.anchorX > 0 ? 4 : -4) : (i % 2 === 0 ? 3 : -3));
+        const midY = (anchorPy + endY) / 2;
+
+        return (
+          <g key={i} className={`creature-limb creature-limb--${limb.type}`}>
+            {/* Limb shape - wobbly elongated path */}
+            <path
+              d={`M${anchorPx},${anchorPy} Q${midX},${midY} ${endX},${endY}`}
+              stroke={limb.color || '#222'}
+              strokeWidth={limb.width || 6}
+              strokeLinecap="round"
+              fill="none"
+            />
+            {/* Foot/hand circle at the end */}
+            <circle
+              cx={endX}
+              cy={endY}
+              r={limb.width * 0.7 || 4}
+              fill={limb.color || '#222'}
+              stroke="#222"
+              strokeWidth={1.5}
+            />
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
 // ── Additions renderer (Gemini's custom SVG elements) ─────
 function Additions({ additions = [] }: { additions?: AdditionSpec[] }) {
   return (
@@ -200,21 +262,23 @@ interface CreatureRendererProps {
     eyes?: Partial<EyeSpec>;
     mouth?: Partial<MouthSpec>;
     additions?: AdditionSpec[];
+    limbs?: LimbSpec[];
   } | null;
   size?: number;
   className?: string;
+  isDead?: boolean;
 }
 
-export function CreatureRenderer({ spec, size = 200, className = '' }: CreatureRendererProps) {
+export function CreatureRenderer({ spec, size = 200, className = '', isDead = false }: CreatureRendererProps) {
   if (!spec) return null;
-  const { body = {}, eyes = {}, mouth = {}, additions = [] } = spec;
+  const { body = {}, eyes = {}, mouth = {}, additions = [], limbs = [] } = spec;
 
   return (
     <svg
       viewBox="-100 -100 200 200"
       width={size}
       height={size}
-      className={className}
+      className={`${className}${isDead ? ' creature--dead' : ''}`}
       style={{ overflow: 'visible' }}
     >
       <defs>
@@ -225,10 +289,17 @@ export function CreatureRenderer({ spec, size = 200, className = '' }: CreatureR
         </filter>
       </defs>
       <g filter="url(#creature-wobble)">
+        {/* Limbs behind body */}
+        <Limbs limbs={limbs} bodyWidth={body.width} bodyHeight={body.height} />
         <BodyShape {...body} />
         <Additions additions={additions} />
-        <Eyes {...eyes} />
-        <Mouth {...mouth} />
+        <Eyes {...eyes} isDead={isDead} />
+        {isDead ? (
+          /* Dead mouth — flat line */
+          <Mouth variant="flat" width={mouth.width ?? 20} offsetY={mouth.offsetY ?? 15} />
+        ) : (
+          <Mouth {...mouth} />
+        )}
       </g>
     </svg>
   );

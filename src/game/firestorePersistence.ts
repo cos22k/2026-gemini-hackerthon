@@ -94,6 +94,23 @@ export async function listSessions(
   });
 }
 
+export async function loadEvents(
+  uid: string,
+  sessionId: string,
+): Promise<HistoryEvent[]> {
+  const eventsRef = collection(db, 'users', uid, 'sessions', sessionId, 'events');
+  const q = query(eventsRef, orderBy('timestamp', 'asc'));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => {
+    const data = d.data();
+    return {
+      type: data.type ?? '',
+      title: data.title ?? '',
+      summary: data.summary ?? '',
+    };
+  });
+}
+
 // ── Helpers ───────────────────────────────────────────────
 
 function serializeCreature(c: GameCreature): Record<string, unknown> {

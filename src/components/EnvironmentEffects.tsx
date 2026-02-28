@@ -4,6 +4,7 @@ interface EnvironmentEffectsProps {
 }
 
 const KNOWN_TAGS = [
+  // Original 10
   'acidic',
   'corrosive_fog',
   'frozen',
@@ -14,6 +15,24 @@ const KNOWN_TAGS = [
   'parasitic',
   'zero_gravity',
   'seismic',
+  // Atmospheric / Celestial
+  'electrical',
+  'sandstorm',
+  'meteor_shower',
+  'solar_flare',
+  'pitch_dark',
+  'ash_fall',
+  // Biological / Ecological
+  'fungal_bloom',
+  'bioluminescent',
+  'toxic_spore',
+  'overgrowth',
+  // Geological / Physical
+  'crystal_growth',
+  'magnetic_anomaly',
+  'tidal_surge',
+  'erosion',
+  'high_pressure',
 ];
 
 export default function EnvironmentEffects({ envTags, active }: EnvironmentEffectsProps) {

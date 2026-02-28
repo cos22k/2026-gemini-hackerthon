@@ -77,7 +77,6 @@
   width: 100%;
 }
 
-
 .stage__birth-words {
   text-align: center;
   font-style: italic;
@@ -138,8 +137,6 @@
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  background: var(--bg-primary);
-  z-index: 1;
 }
 
 .history__sidebar-tab {
@@ -148,30 +145,26 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
-  background: var(--bg-card);
+  background: var(--bg-secondary);
   border: none;
-  border-bottom: 1px dashed var(--border-light);
-  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  border-left: 2px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
   cursor: pointer;
   color: var(--text-muted);
-  transition: all var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast);
   padding: var(--space-lg) var(--space-sm);
-  margin-left: -2px;
 }
 
 .history__sidebar-tab:hover {
   color: var(--text-primary);
-  background: var(--bg-card-hover);
-  transform: translateX(-2px);
+  border-left-color: var(--text-muted);
 }
 
 .history__sidebar-tab--active {
   color: var(--text-primary);
-  background: var(--bg-card);
   border-left: 2px solid var(--accent-green);
-  margin-left: -2px;
-  position: relative;
-  box-shadow: var(--shadow-sm);
 }
 
 .history__sidebar-tab-label {
@@ -185,15 +178,17 @@
 }
 
 .history__sidebar-collapse {
-  margin-top: auto;
-  background: transparent;
+  background: var(--bg-secondary);
   border: none;
-  border-top: 1px dashed var(--border-light);
+  border-left: 2px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
   cursor: pointer;
   color: var(--text-muted);
   font-size: var(--text-xs);
   padding: var(--space-sm);
-  transition: all var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .history__sidebar-collapse:hover {
@@ -211,8 +206,15 @@
 }
 
 @keyframes badge-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.5); opacity: 0.5; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
 }
 
 /* --- Tab content area --- */
@@ -694,11 +696,19 @@
 
 /* --- Synthesis attention pulse --- */
 .history__synthesis--attention {
-  animation: modal-fadein 300ms ease, synthesis-attention 1s ease 0.4s 2;
+  animation:
+    modal-fadein 300ms ease,
+    synthesis-attention 1s ease 0.4s 2;
 }
 
 @keyframes synthesis-attention {
-  0% { box-shadow: 0 0 0 0 rgba(58, 107, 74, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(58, 107, 74, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(58, 107, 74, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(58, 107, 74, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(58, 107, 74, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(58, 107, 74, 0);
+  }
 }
