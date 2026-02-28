@@ -21,10 +21,10 @@ Players create lifeforms from 2 keywords, watch AI-driven evolution through envi
 ## Commands
 
 ```bash
-npm run dev       # Start Vite dev server
-npm run build     # Production build (vite build)
-npm run lint      # ESLint (flat config, ESLint 9+)
-npm run preview   # Preview production build
+pnpm dev          # Start Vite dev server
+pnpm build        # Production build (vite build)
+pnpm lint         # ESLint (flat config, ESLint 9+)
+pnpm preview      # Preview production build
 ```
 
 ## Project Structure
