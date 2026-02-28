@@ -1,12 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 
+interface PreviousSession {
+  id: string;
+  createdAt: Date;
+  phase: string;
+  creature: string | null;
+}
+
 interface IntroScreenProps {
   onStart: (k1: string, k2: string) => void;
+  onContinue?: (sessionId: string) => void;
+  previousSessions?: PreviousSession[];
 }
 
 const DEBUG_KEYWORDS: [string, string] = ['불', '물'];
 
-export default function IntroScreen({ onStart }: IntroScreenProps) {
+export default function IntroScreen({ onStart, onContinue, previousSessions }: IntroScreenProps) {
   const [keyword1, setKeyword1] = useState('');
   const [keyword2, setKeyword2] = useState('');
   const didSkip = useRef(false);
@@ -33,6 +42,10 @@ export default function IntroScreen({ onStart }: IntroScreenProps) {
     if (e.key === 'Enter' && canStart) handleStart();
   };
 
+  const continuableSessions = previousSessions?.filter(
+    (s) => s.creature && s.phase !== 'intro',
+  );
+
   return (
     <div className="intro">
       <div className="intro__icon">🌱</div>
@@ -44,6 +57,21 @@ export default function IntroScreen({ onStart }: IntroScreenProps) {
         <span className="intro__tagline">자연이 먼저 말합니다</span>
         <span className="intro__tagline">당신은 단 한 번만 개입할 수 있습니다</span>
       </div>
+
+      {continuableSessions && continuableSessions.length > 0 && onContinue && (
+        <div className="intro__sessions">
+          <p className="intro__sessions-label">이전 세션 이어하기</p>
+          {continuableSessions.slice(0, 3).map((s) => (
+            <button
+              key={s.id}
+              className="intro__session-btn"
+              onClick={() => onContinue(s.id)}
+            >
+              {s.creature ?? '알 수 없는 생명체'} — {s.phase}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="intro__inputs">
         <input

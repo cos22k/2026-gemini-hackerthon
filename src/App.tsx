@@ -28,7 +28,7 @@ import { getChaosLevel } from "./game/environment";
 import { executeWorldEvents } from "./game/worldEventExecutor";
 import { normalizeCreatureSpec } from "./api/schemas";
 import { useAuth } from "./lib/auth";
-import { createSession, saveGameEvent } from "./game/firestorePersistence";
+import { createSession, saveGameEvent, listSessions, loadSession, loadEvents } from "./game/firestorePersistence";
 
 function mergeCreatureSpec(
   current: CreatureSpec | undefined,
@@ -68,6 +68,15 @@ function GamePage() {
   const [history, setHistory] = useState<HistoryEvent[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [round, setRound] = useState(1);
+  const [previousSessions, setPreviousSessions] = useState<
+    { id: string; createdAt: Date; phase: string; creature: string | null }[]
+  >([]);
+
+  // Load previous sessions when uid is available
+  useEffect(() => {
+    if (!uid) return;
+    listSessions(uid).then(setPreviousSessions).catch(console.error);
+  }, [uid]);
 
   // Clear timer on unmount
   useEffect(() => {
@@ -383,6 +392,42 @@ function GamePage() {
     }
   };
 
+  const handleContinue = async (sid: string) => {
+    if (!uid) return;
+    setLoading(true);
+    setLoadingMessage("세션을 불러오는 중...");
+
+    const session = await loadSession(uid, sid).catch(() => null);
+    if (!session || !session.creature) {
+      setLoading(false);
+      return;
+    }
+
+    const events = await loadEvents(uid, sid).catch(() => [] as HistoryEvent[]);
+
+    setSessionId(sid);
+    sessionIdRef.current = sid;
+    setCreature(session.creature as Creature);
+    setHistory(events);
+    setRound(session.round);
+    setLoading(false);
+
+    // Resume at epilogue if already done, otherwise show the creature in birth state
+    const resumePhase = session.phase === 'epilogue' ? 'epilogue' : 'birth';
+    setPhase(resumePhase);
+
+    // If resuming mid-game, generate next environment
+    if (resumePhase === 'birth') {
+      const env = await generateEnvironment(
+        session.creature as Creature,
+        getChaosLevel(session.creature.generation ?? 1),
+      );
+      if (env) {
+        startEnvironmentPhase(env);
+      }
+    }
+  };
+
   const handleRestart = () => {
     if (envTimerRef.current) clearTimeout(envTimerRef.current);
     setPhase("intro");
@@ -396,7 +441,13 @@ function GamePage() {
   };
 
   if (phase === "intro") {
-    return <IntroScreen onStart={handleStart} />;
+    return (
+      <IntroScreen
+        onStart={handleStart}
+        onContinue={handleContinue}
+        previousSessions={previousSessions}
+      />
+    );
   }
 
   const actionButtons: ActionButton[] = [];
