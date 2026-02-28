@@ -28,7 +28,7 @@ import { getChaosLevel } from "./game/environment";
 import { executeWorldEvents } from "./game/worldEventExecutor";
 import { normalizeCreatureSpec } from "./api/schemas";
 import { useAuth } from "./lib/auth";
-import { createSession, saveGameEvent, listSessions, loadSession, loadEvents } from "./game/firestorePersistence";
+import { createSession, saveGameEvent, saveGameState, listSessions, loadSession, loadEvents } from "./game/firestorePersistence";
 
 function mergeCreatureSpec(
   current: CreatureSpec | undefined,
@@ -115,6 +115,28 @@ function GamePage() {
     }
   };
 
+  const persistState = (phaseOverride?: string) => {
+    const currentUid = uidRef.current;
+    const currentSessionId = sessionIdRef.current;
+    if (currentUid && currentSessionId) {
+      saveGameState(currentUid, currentSessionId, {
+        phase: (phaseOverride ?? phase) as import("./game/types").GamePhase,
+        round,
+        chaosLevel: getChaosLevel(round),
+        creature: creatureRef.current as import("./game/types").GameCreature | null,
+        environment: null,
+        evolution: null,
+        trial: null,
+        history: [],
+        synthesisHistory: [],
+        loading: false,
+        loadingMessage: "",
+        error: null,
+        sessionId: currentSessionId,
+      }).catch(console.error);
+    }
+  };
+
   // Start environment phase with auto-timer
   const startEnvironmentPhase = useCallback((env: Environment) => {
     setEnvironment(env);
@@ -166,6 +188,7 @@ function GamePage() {
     }
 
     setCreature(newCreature);
+    creatureRef.current = newCreature;
     const birthEvent: HistoryEvent = {
       type: "birth",
       title: "탄생",
@@ -177,6 +200,7 @@ function GamePage() {
     // Show creature on stage (no loading overlay), generate env in background
     setLoading(false);
     setPhase("birth");
+    persistState("birth");
 
     const env = await generateEnvironment(
       newCreature,
