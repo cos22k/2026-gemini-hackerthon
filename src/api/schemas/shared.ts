@@ -65,6 +65,16 @@ export const additionSpecSchema = z.object({
   opacity: z.number().optional(),
 });
 
+export const limbSpecSchema = z.object({
+  type: z.enum(['leg', 'arm']),
+  anchorX: z.number(),
+  anchorY: z.number(),
+  length: z.number(),
+  width: z.number(),
+  color: z.string(),
+  restAngle: z.number(),
+});
+
 export const creatureSpecSchema = z.object({
   body: z.object({
     shape: z.enum(['ellipse', 'roundRect', 'blob']),
@@ -86,6 +96,7 @@ export const creatureSpecSchema = z.object({
     offsetY: z.number().int(),
   }),
   additions: z.array(additionSpecSchema).optional(),
+  limbs: z.array(limbSpecSchema).optional(),
   movement: z.enum(['waddle', 'bounce', 'drift', 'hop']),
 });
 
@@ -133,6 +144,7 @@ export const specMutationSchema = z.object({
     offsetY: z.number().int().optional(),
   }).optional(),
   additions: z.array(additionSpecSchema).optional(),
+  limbs: z.array(limbSpecSchema).optional(),
   movement: z.enum(['waddle', 'bounce', 'drift', 'hop']).optional(),
 });
 
@@ -143,6 +155,10 @@ export const DEFAULT_CREATURE_SPEC: CreatureSpec = {
   eyes: { variant: 'dot', size: 18, spacing: 36, offsetY: -15, count: 2 },
   mouth: { variant: 'smile', width: 20, offsetY: 15 },
   additions: [],
+  limbs: [
+    { type: 'leg', anchorX: -0.4, anchorY: 0.9, length: 30, width: 6, color: '#222', restAngle: -15 },
+    { type: 'leg', anchorX: 0.4, anchorY: 0.9, length: 30, width: 6, color: '#222', restAngle: 15 },
+  ],
   movement: 'waddle',
 };
 
@@ -175,8 +191,24 @@ export function normalizeCreatureSpec(raw: Record<string, unknown> | undefined):
       offsetY: Number(mouth.offsetY) || 15,
     },
     additions: Array.isArray(raw.additions) ? raw.additions : [],
+    limbs: normalizeLimbs(raw.limbs),
     movement: (['waddle', 'bounce', 'drift', 'hop'].includes(raw.movement as string) ? raw.movement : 'waddle') as CreatureSpec['movement'],
   };
+}
+
+function normalizeLimbs(raw: unknown): CreatureSpec['limbs'] {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return DEFAULT_CREATURE_SPEC.limbs;
+  }
+  return raw.slice(0, 8).map((l: Record<string, unknown>) => ({
+    type: (l.type === 'arm' ? 'arm' : 'leg') as 'leg' | 'arm',
+    anchorX: Math.max(-1, Math.min(1, Number(l.anchorX) || 0)),
+    anchorY: Math.max(-1, Math.min(1, Number(l.anchorY) || 0.9)),
+    length: Math.max(10, Math.min(60, Number(l.length) || 30)),
+    width: Math.max(3, Math.min(14, Number(l.width) || 6)),
+    color: typeof l.color === 'string' ? l.color : '#222',
+    restAngle: Math.max(-45, Math.min(45, Number(l.restAngle) || 0)),
+  }));
 }
 
 export function normalizeWorldEvents(events: unknown[] | undefined): PhysicsCommand[] {

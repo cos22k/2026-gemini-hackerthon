@@ -41,7 +41,7 @@ export function wobblyRectPath(w: number, h: number, seed = 1): string {
 }
 
 // ── Hook ────────────────────────────────────────────────────
-export function usePhysicsWorld() {
+export function usePhysicsWorld(isDead = false) {
   const engineRef = useRef<Matter.Engine | null>(null);
   const creatureRef = useRef<Matter.Body | null>(null);
   const [bodies, setBodies] = useState<PhysicsBodySnapshot[]>([]);
@@ -52,6 +52,8 @@ export function usePhysicsWorld() {
   });
   const windRef = useRef({ x: 0, y: 0 });
   const gravityRef = useRef(0.003);
+  const isDeadRef = useRef(isDead);
+  isDeadRef.current = isDead;
 
   useEffect(() => {
     const engine = Engine.create({ gravity: { x: 0, y: 0, scale: 0 } });
@@ -73,8 +75,8 @@ export function usePhysicsWorld() {
         label: 'creature',
         density: 0.004,
         friction: 1,
-        restitution: 0.05,
-        frictionAir: 0.06,
+        restitution: 0.02,
+        frictionAir: 0.08,
       },
     );
     creatureRef.current = creature;
@@ -103,6 +105,26 @@ export function usePhysicsWorld() {
             y: (dy / dist) * force,
           });
         }
+      }
+
+      // Upright torque — keep creature oriented "head up" relative to planet surface
+      if (!isDeadRef.current) {
+        const cr = creatureRef.current!;
+        const dx = cr.position.x - PLANET_CENTER.x;
+        const dy = cr.position.y - PLANET_CENTER.y;
+        // Desired angle: radially outward from planet center
+        const desiredAngle = Math.atan2(dx, -dy);
+        let angleDiff = desiredAngle - cr.angle;
+        // Normalize to [-PI, PI]
+        while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+        // Gentle corrective torque — low strength to avoid vibration, high damping to settle
+        const UPRIGHT_STRENGTH = 0.03;
+        const UPRIGHT_DAMPING = 0.92;
+        Body.setAngularVelocity(
+          cr,
+          cr.angularVelocity * UPRIGHT_DAMPING + angleDiff * UPRIGHT_STRENGTH,
+        );
       }
 
       // Apply wind

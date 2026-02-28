@@ -54,6 +54,28 @@ Output schema:
       // Wavy stripe:      { "el": "path", "d": "M-38,-8 Q-15,-18 0,-12 Q18,-20 38,-10", "stroke": "#666", "strokeWidth": 2 }
       // Leaf/petal:       { "el": "path", "d": "M-50,5 Q-70,-10 -65,-30 Q-55,-15 -50,5Z", "fill": "#88cc66", "stroke": "#446633" }
     ],
+    "limbs": [
+      // Body part nodes for locomotion. The creature MUST have limbs to walk/crawl.
+      // The creature tries to maintain an upright position using these limbs.
+      // anchorX: -1 (left edge) to 1 (right edge), anchorY: -1 (top) to 1 (bottom)
+      // length: 20~60 px, width: 4~12 px (thickness)
+      // restAngle: degrees from straight down. Negative = splay left, Positive = splay right
+      // MINIMUM 2 legs required. Can have 2~8 limbs total.
+      // Examples:
+      // Bipedal (2 legs):
+      //   { "type": "leg", "anchorX": -0.4, "anchorY": 0.9, "length": 30, "width": 6, "color": "#222", "restAngle": -15 }
+      //   { "type": "leg", "anchorX": 0.4, "anchorY": 0.9, "length": 30, "width": 6, "color": "#222", "restAngle": 15 }
+      // Quadruped (4 legs):
+      //   { "type": "leg", "anchorX": -0.8, "anchorY": 0.7, "length": 35, "width": 7, "color": "#555", "restAngle": -25 }
+      //   { "type": "leg", "anchorX": -0.3, "anchorY": 0.9, "length": 28, "width": 6, "color": "#555", "restAngle": -10 }
+      //   { "type": "leg", "anchorX": 0.3, "anchorY": 0.9, "length": 28, "width": 6, "color": "#555", "restAngle": 10 }
+      //   { "type": "leg", "anchorX": 0.8, "anchorY": 0.7, "length": 35, "width": 7, "color": "#555", "restAngle": 25 }
+      // With arms:
+      //   { "type": "arm", "anchorX": -0.9, "anchorY": -0.1, "length": 25, "width": 5, "color": "#888", "restAngle": -30 }
+      //   { "type": "arm", "anchorX": 0.9, "anchorY": -0.1, "length": 25, "width": 5, "color": "#888", "restAngle": 30 }
+      // Centipede-like (6+ legs):
+      //   Use anchorX from -0.9 to 0.9, anchorY around 0.6~1.0, restAngle spreading outward
+    ],
     "movement": "waddle" or "bounce" or "drift" or "hop"
   }
 }
@@ -66,6 +88,10 @@ Output schema:
 - 이 생명체가 가진 근본적 딜레마를 약점에 반영하라
 - creature_spec의 body color는 키워드의 물성을 반영 (금속→은색, 장미→분홍 등)
 - creature_spec의 movement는 생명체의 성격에 맞게 선택
+- creature_spec의 limbs는 반드시 2~8개 포함. 최소 2개의 leg 필수. 키워드 특성에 따라 다리/팔 수 결정.
+  - 수중 생물 → 짧은 다리 많이 (6~8개), 고양이/개 → 4개 다리, 인간형 → 2다리+2팔, 곤충형 → 6다리
+  - limb의 color는 body color와 어울리게 (같은 색 또는 약간 어둡게)
+  - 다리는 anchorY 0.6~1.0 (몸 아래쪽), 팔은 anchorY -0.3~0.3 (몸 옆쪽)
 - creature_spec의 additions는 반드시 3~6개 포함. 키워드의 특성을 시각적으로 표현 (촉수, 뿔, 점, 줄무늬, 날개, 가시, 잎, 꽃잎 등)
 - additions의 좌표계: 몸 중심 = (0,0), viewBox는 -100~100. 몸 바깥으로 나가도 됨.
 - additions 스타일: 반드시 손그림(doodly) 느낌. 직선(L) 대신 곡선(Q, C)을 사용. 약간 불규칙하고 유기적으로.
@@ -179,6 +205,7 @@ Output schema:
     "eyes": { "variant": "optional", "size": "optional int", "spacing": "optional int", "offsetY": "optional int", "count": "optional int 1~4" },
     "mouth": { "variant": "optional", "width": "optional int", "offsetY": "optional int" },
     "additions": [{ "el": "circle|ellipse|rect|path|polygon|polyline|line", "fill": "#hex", "stroke": "#hex" }],
+    "limbs": [{ "type": "leg|arm", "anchorX": -1~1, "anchorY": -1~1, "length": 20~60, "width": 4~12, "color": "#hex", "restAngle": -45~45 }],
     "movement": "waddle|bounce|drift|hop if changed"
   },
   "world_events": [
@@ -192,6 +219,7 @@ creature_spec_mutation 규칙:
 - body color 변경은 거의 항상 포함
 - 극적인 진화 시: shape 변경 (blob→roundRect), 크기 변경 (width/height), 눈 개수 증가, 입 variant 변경
 - additions로 촉수/가시/날개 등 SVG 요소 추가 가능 (circle, path, polygon 등)
+- limbs 변경: 진화로 다리/팔 추가·제거·변형 가능. 수중 적응 → 다리 짧아짐, 육상 적응 → 다리 강화, 비행 → 팔이 날개로
 - 부모의 현재 creature_spec이 아래에 제공됨 — 이를 기반으로 자연스럽게 변형할 것
 
 규칙:
@@ -262,6 +290,7 @@ Output schema:
     "eyes": { "variant": "optional", "size": "optional int", "spacing": "optional int", "offsetY": "optional int", "count": "optional int" },
     "mouth": { "variant": "optional", "width": "optional int", "offsetY": "optional int" },
     "additions": [{ "el": "circle|ellipse|rect|path|polygon|polyline|line", "fill": "#hex", "stroke": "#hex" }],
+    "limbs": [{ "type": "leg|arm", "anchorX": -1~1, "anchorY": -1~1, "length": 20~60, "width": 4~12, "color": "#hex", "restAngle": -45~45 }],
     "movement": "waddle|bounce|drift|hop if changed"
   },
   "world_events": [
@@ -274,7 +303,8 @@ Output schema:
 - 새 키워드의 물리적 속성과 상징적 의미 모두 반영
 - 기존 특성을 완전히 덮어쓰지 않음. 기존 흔적이 남아야 함.
 - 합성으로 기존 약점 1개가 해소될 수 있지만, 새로운 약점이 생길 수도 있음.
-- stat_changes 합계는 약간 양수 (+5~+15). 합성은 보상이므로 순이득이 있어야 함.`;
+- stat_changes 합계는 약간 양수 (+5~+15). 합성은 보상이므로 순이득이 있어야 함.
+- limbs 변경: 합성으로 다리/팔 추가·강화 가능. 새 물질의 특성이 다리에 반영될 수 있음.`;
 
 // ── User prompt builders ──────────────────────────────────
 
