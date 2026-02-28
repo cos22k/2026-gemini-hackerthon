@@ -5,8 +5,8 @@ import type { PhysicsBodySnapshot, CreaturePosition, PhysicsCommand } from './ty
 const { Engine, Bodies, Body, Composite } = Matter;
 
 export const CANVAS = { width: 840, height: 640 };
-export const PLANET_R = 1200;
-export const PLANET_CENTER = { x: 420, y: 1500 };
+export const PLANET_R = 6000;
+export const PLANET_CENTER = { x: 420, y: 6300 };
 const CREATURE_R = 42;
 const MAX_CREATURE_SPEED = 5; // px per physics step — keeps creature visible
 
@@ -133,14 +133,12 @@ export function usePhysicsWorld() {
         const dist = Math.sqrt(dx * dx + dy * dy);
         const minDist = PLANET_R + CREATURE_R;
         if (dist < minDist && dist > 0) {
-          // Push creature back to surface
           const nx = dx / dist;
           const ny = dy / dist;
           Body.setPosition(cr, {
             x: PLANET_CENTER.x + nx * minDist,
             y: PLANET_CENTER.y + ny * minDist,
           });
-          // Kill inward velocity component
           const vDot = cr.velocity.x * nx + cr.velocity.y * ny;
           if (vDot < 0) {
             Body.setVelocity(cr, {
@@ -151,12 +149,26 @@ export function usePhysicsWorld() {
         }
       }
 
+      // Hard boundary — creature stays within visible area (±margin around canvas)
+      {
+        const cr = creatureRef.current!;
+        const MARGIN = 200;
+        const clampedX = Math.max(-MARGIN, Math.min(CANVAS.width + MARGIN, cr.position.x));
+        if (cr.position.x !== clampedX) {
+          // Recalculate Y to stay on planet surface at clamped X
+          const dx = clampedX - PLANET_CENTER.x;
+          const surfaceY = PLANET_CENTER.y - Math.sqrt(Math.max(0, (PLANET_R + CREATURE_R) ** 2 - dx * dx));
+          Body.setPosition(cr, { x: clampedX, y: surfaceY });
+          Body.setVelocity(cr, { x: 0, y: cr.velocity.y });
+        }
+      }
+
       // Cleanup — remove bodies that drifted too far
       for (const b of dynamicBodies) {
         if (b.label === 'creature') continue;
         const dx = b.position.x - PLANET_CENTER.x;
         const dy = b.position.y - PLANET_CENTER.y;
-        if (dx * dx + dy * dy > 1200 * 1200) {
+        if (dx * dx + dy * dy > (PLANET_R + 600) * (PLANET_R + 600)) {
           Composite.remove(engine.world, b);
         }
       }

@@ -430,8 +430,8 @@ export const WorldScene = forwardRef<WorldSceneHandle, WorldSceneProps>(function
       <svg width="0" height="0" style={{ position: 'absolute' }}>
         <defs>
           <filter id="sketchy" x="-15%" y="-15%" width="130%" height="130%">
-            <feTurbulence type="turbulence" baseFrequency="0.04" numOctaves="4" seed="2" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G" />
+            <feTurbulence type="turbulence" baseFrequency="0.035" numOctaves="4" seed="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.5" xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
       </svg>

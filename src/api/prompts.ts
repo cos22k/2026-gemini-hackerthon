@@ -41,15 +41,18 @@ Output schema:
       "offsetY": 8~25
     },
     "additions": [
-      // SVG elements for unique features. Use the SVG coordinate system: body center = (0,0), viewBox is -100 to 100.
+      // SVG elements for unique features. Body center = (0,0), viewBox is -100 to 100.
+      // STYLE: Hand-drawn, organic, doodly. Use Q/C curves in paths, NOT straight lines.
+      //        All shapes should feel wobbly and alive, like a sketch on paper.
       // Examples:
-      // Tentacle: { "el": "path", "d": "M0,40 Q20,70 10,95", "stroke": "#555", "strokeWidth": 3, "fill": "none" }
-      // Spot:     { "el": "circle", "cx": -20, "cy": 10, "r": 8, "fill": "#ff9999", "opacity": 0.6 }
-      // Horn:     { "el": "polygon", "points": "0,-55 -8,-35 8,-35", "fill": "#ddd", "stroke": "#222" }
-      // Antenna:  { "el": "line", "x1": -15, "y1": -50, "x2": -25, "y2": -80, "stroke": "#222", "strokeWidth": 2 }
-      // Fin:      { "el": "ellipse", "cx": 55, "cy": 0, "rx": 15, "ry": 30, "fill": "#aaddff", "stroke": "#222", "opacity": 0.7 }
-      // Wing:     { "el": "path", "d": "M50,0 Q90,-40 70,-60 Q50,-30 50,0Z", "fill": "#eeddff", "stroke": "#222" }
-      // Stripe:   { "el": "path", "d": "M-40,-10 Q0,-20 40,-10", "stroke": "#666", "strokeWidth": 2, "fill": "none" }
+      // Wobbly tentacle:  { "el": "path", "d": "M2,40 Q22,65 15,85 Q8,95 12,98", "stroke": "#555", "strokeWidth": 3 }
+      // Organic spot:     { "el": "circle", "cx": -18, "cy": 12, "r": 9, "fill": "#ff9999", "opacity": 0.5 }
+      // Bumpy horn:       { "el": "path", "d": "M0,-50 Q5,-60 2,-72 Q-2,-65 -4,-55 Q-2,-48 0,-50Z", "fill": "#ddd", "stroke": "#222" }
+      // Curly antenna:    { "el": "path", "d": "M-15,-50 Q-20,-65 -28,-70 Q-35,-72 -30,-78", "stroke": "#222", "strokeWidth": 2 }
+      // Soft fin:         { "el": "path", "d": "M48,-5 Q68,-15 72,-30 Q70,-10 55,10 Q48,8 48,-5Z", "fill": "#aaddff", "stroke": "#222", "opacity": 0.7 }
+      // Wiggly wing:      { "el": "path", "d": "M48,0 Q85,-35 72,-58 Q60,-45 52,-25 Q48,-10 48,0Z", "fill": "#eeddff", "stroke": "#222" }
+      // Wavy stripe:      { "el": "path", "d": "M-38,-8 Q-15,-18 0,-12 Q18,-20 38,-10", "stroke": "#666", "strokeWidth": 2 }
+      // Leaf/petal:       { "el": "path", "d": "M-50,5 Q-70,-10 -65,-30 Q-55,-15 -50,5Z", "fill": "#88cc66", "stroke": "#446633" }
     ],
     "movement": "waddle" or "bounce" or "drift" or "hop"
   }
@@ -63,8 +66,10 @@ Output schema:
 - 이 생명체가 가진 근본적 딜레마를 약점에 반영하라
 - creature_spec의 body color는 키워드의 물성을 반영 (금속→은색, 장미→분홍 등)
 - creature_spec의 movement는 생명체의 성격에 맞게 선택
-- creature_spec의 additions는 반드시 2~5개 포함. 키워드의 특성을 시각적으로 표현 (촉수, 뿔, 점, 줄무늬, 날개, 가시 등)
+- creature_spec의 additions는 반드시 3~6개 포함. 키워드의 특성을 시각적으로 표현 (촉수, 뿔, 점, 줄무늬, 날개, 가시, 잎, 꽃잎 등)
 - additions의 좌표계: 몸 중심 = (0,0), viewBox는 -100~100. 몸 바깥으로 나가도 됨.
+- additions 스타일: 반드시 손그림(doodly) 느낌. 직선(L) 대신 곡선(Q, C)을 사용. 약간 불규칙하고 유기적으로.
+- path의 d 속성에서 절대로 직선만 쓰지 말 것. Q(quadratic) 또는 C(cubic) 커브를 반드시 사용.
 - image_prompt는 영어로, "digital art, fantasy creature, botanical illustration" 스타일 키워드 포함`;
 
 export const ENVIRONMENT_SYSTEM_PROMPT = `You simulate extreme planetary environments for a fictional evolution game.
