@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "creature-generator",
+  "main": "index.js",
+  "compatibility_date": "2025-04-01",
+
+  // R2 bucket binding (for future image storage)
+  "r2_buckets": [
+    {
+      "binding": "IMAGES",
+      "bucket_name": "gemini-hackathon-images"
+    }
+  ]
+
+  // Secrets (set via `wrangler secret put GEMINI_API_KEY`):
+  // - GEMINI_API_KEY
+}
