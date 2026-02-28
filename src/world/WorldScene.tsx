@@ -366,6 +366,10 @@ const DEFAULT_SPEC: CreatureSpec = {
   eyes: { variant: 'dot', size: 18, spacing: 36, offsetY: -15, count: 2 },
   mouth: { variant: 'smile', width: 20, offsetY: 15 },
   additions: [],
+  limbs: [
+    { type: 'leg', anchorX: -0.4, anchorY: 0.9, length: 30, width: 6, color: '#222', restAngle: -15 },
+    { type: 'leg', anchorX: 0.4, anchorY: 0.9, length: 30, width: 6, color: '#222', restAngle: 15 },
+  ],
   movement: 'waddle',
 };
 
@@ -380,6 +384,8 @@ export interface WorldSceneProps {
   atmosphereColor?: string;
   /** Atmosphere opacity 0-1 */
   atmosphereOpacity?: number;
+  /** Whether the creature is dead (flipped, X eyes, no upright torque) */
+  isDead?: boolean;
 }
 
 export interface WorldSceneHandle {
@@ -388,12 +394,12 @@ export interface WorldSceneHandle {
 }
 
 export const WorldScene = forwardRef<WorldSceneHandle, WorldSceneProps>(function WorldScene(
-  { weather = 'none', creatureSpec, creatureSize = 220, theme = 'dark', atmosphereColor, atmosphereOpacity = 0.15 },
+  { weather = 'none', creatureSpec, creatureSize = 220, theme = 'dark', atmosphereColor, atmosphereOpacity = 0.15, isDead = false },
   ref,
 ) {
   const spec = creatureSpec ?? DEFAULT_SPEC;
   const palette = PALETTES[theme];
-  const { bodies, creaturePos, dispatch, getWorldParams } = usePhysicsWorld();
+  const { bodies, creaturePos, dispatch, getWorldParams } = usePhysicsWorld(isDead);
 
   const getWorldState = useCallback((): WorldSnapshot => {
     const params = getWorldParams();
@@ -412,8 +418,8 @@ export const WorldScene = forwardRef<WorldSceneHandle, WorldSceneProps>(function
     // Target: creature centered in viewport
     const targetX = CANVAS.width / 2 - creaturePos.x;
     const targetY = CANVAS.height / 2 - creaturePos.y;
-    // Smooth lerp toward target
-    const lerp = 0.08;
+    // Smooth lerp toward target (low value = buttery slow follow)
+    const lerp = 0.04;
     const cam = cameraRef.current;
     const newX = cam.x + (targetX - cam.x) * lerp;
     const newY = cam.y + (targetY - cam.y) * lerp;
@@ -464,6 +470,7 @@ export const WorldScene = forwardRef<WorldSceneHandle, WorldSceneProps>(function
         className="world-camera"
         style={{
           transform: `translate(${camera.x}px, ${camera.y}px)`,
+          transition: 'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
           position: 'absolute',
           inset: 0,
         }}
@@ -485,8 +492,8 @@ export const WorldScene = forwardRef<WorldSceneHandle, WorldSceneProps>(function
             transform: `translate(-50%, -50%) rotate(${creaturePos.angle}rad)`,
           }}
         >
-          <div className={`movement-${spec.movement}`}>
-            <CreatureRenderer spec={spec} size={creatureSize} />
+          <div className={`movement-${spec.movement}${isDead ? ' movement--dead' : ''}`}>
+            <CreatureRenderer spec={spec} size={creatureSize} isDead={isDead} />
           </div>
         </div>
       </div>

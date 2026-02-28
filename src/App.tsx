@@ -41,6 +41,7 @@ function mergeCreatureSpec(
     eyes: { ...base.eyes, ...mutation.eyes },
     mouth: { ...base.mouth, ...mutation.mouth },
     additions: mutation.additions ?? base.additions,
+    limbs: mutation.limbs ?? base.limbs,
     movement: mutation.movement ?? base.movement,
   } as Record<string, unknown>);
 }
@@ -438,6 +439,7 @@ function GamePage() {
         worldRef={worldRef}
         onProceed={handleProceedFromEnvironment}
         durationSeconds={environment?.durationSeconds}
+        isDead={phase === 'epilogue' && trial?.survived === false}
       >
         {phase === "synthesis" && trial && creature && (
           <SynthesisView
