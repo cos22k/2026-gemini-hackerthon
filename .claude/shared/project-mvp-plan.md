@@ -10,6 +10,7 @@
 | ------ | ------------------------------------------------- |
 | v1     | 초기 기획 (관찰/개입 분기 구조)                   |
 | **v2** | **개입 메카닉 제거 → 합성 기반 성장 루프로 전환** |
+| **v2.1** | **손그림 두들 B&W 아트 스타일, 환경 배경 이펙트, 히스토리 Firestore 저장** |
 
 ### v2 핵심 변경 사항
 
@@ -27,9 +28,21 @@
 
 ### 기술 스택
 
-- 프론트엔드: React (Vite)
-- AI: Gemini 2.0 Flash (텍스트) + Gemini 이미지 생성 (캐릭터)
+- 프론트엔드: React (Vite) + TypeScript
+- AI: Gemini 2.5 Flash (텍스트, structured output) + Gemini 이미지 생성 (캐릭터)
+- 물리엔진: Matter.js (2D 물리 시뮬레이션)
+- 백엔드: Firebase (Auth + Firestore)
 - 배포: Vercel 또는 로컬
+
+### 아트 스타일
+
+- **손그림 두들 흑백 스케치 스타일** — 종이 위에 펜으로 그린 느낌
+- 배경: `#faf8f2` 따뜻한 오프화이트 종이 질감
+- 텍스트: `#2a2a2a` 잉크 컬러
+- 폰트: `Nanum Pen Script` (한글) + `Caveat` (영문) 손글씨 폰트
+- 테두리: 스케치풍 feTurbulence SVG 필터 적용
+- 그림자: 글로우 대신 플랫 오프셋 그림자
+- 노트북 줄 텍스처 (CSS repeating-linear-gradient)
 
 ---
 
@@ -127,56 +140,72 @@
 
 **레이어 구조 (뒤에서 앞으로):**
 
-1. 배경 레이어: 환경에 따라 변하는 배경 (색상/그라데이션/이펙트)
-2. 캐릭터 레이어: Gemini가 생성한 이미지 (중앙 배치)
-3. UI 오버레이: 하단에 이름, 세대, 스탯, 3축 게이지 표시
+1. 배경 레이어: 환경에 따라 변하는 배경 (색상/그라데이션)
+2. 환경 이펙트 레이어: `env_tags` 기반 CSS 이펙트 오버레이 (두들 스타일 파티클/패턴)
+3. 캐릭터 레이어: Gemini가 생성한 이미지 (중앙 배치)
+4. UI 오버레이: 하단에 이름, 세대, 스탯, 3축 게이지 표시
 
 **상태별 변화:**
 
 | 페이즈          | 메인 스테이지 표시                  | 하단 액션               |
 | --------------- | ----------------------------------- | ----------------------- |
 | 탄생            | 캐릭터 등장 + 탄생 독백             | [다음] (자동 진행 가능) |
-| 환경 변동       | 배경 변화 + 환경 정보 팝업          | 자동 진행 (관전)        |
-| 자동 진화       | 캐릭터 이미지 모프/전환 + 진화 서사 | [다음]                  |
+| 환경 변동       | 배경 이펙트 + 인라인 환경 배너      | AI 결정 시간(10~30초) 후 자동 진행 또는 [진행] 버튼 |
+| 자동 진화       | 진화 이펙트 + 캐릭터 전환 연출      | 자동 진행 (상세 정보는 히스토리 패널에만 표시) |
 | 시련            | 시련 이펙트 + 내러티브              | 자동 판정 → 결과        |
 | 생존 → 합성     | 축하 연출 + 합성 UI                 | [키워드 입력] + [합성]  |
 | 멸종 → 에필로그 | 최후 연출 + 에필로그 서사           | [새로운 생명 창조]      |
 
-### 환경 변동 팝업 (관전용 — 선택 없음)
+### 환경 변동 표시 (배경 이펙트 + 인라인 배너)
 
-v1에서는 "관찰 vs 개입" 선택 모달이었지만, v2에서는 **정보 표시용 팝업**으로 변경.
-플레이어는 환경 변동을 지켜보기만 함.
+v2.1에서는 **모달/팝업 없이** 환경 변동을 배경 이펙트로 표시.
+생명체가 화면에 보이는 상태에서 환경 이펙트가 배경에 겹쳐 재생됨.
+
+**동작 방식:**
+
+1. 환경 생성 API 호출은 **백그라운드**에서 진행 (로딩 오버레이 없음)
+2. 생성 완료 시 `env_tags` 기반 CSS 이펙트가 메인 스테이지 배경에 적용
+3. 상단에 인라인 환경 정보 배너 표시 (이벤트 이름 + 서사 요약)
+4. AI가 결정한 `duration_seconds` (10~30초) 동안 이펙트 재생
+5. 시간 경과 후 자동으로 진화 단계로 진행
+6. 작은 [진행] 버튼으로 조기 스킵 가능
 
 ```
-┌─────────────────────────────────┐
-│  (배경 딤 처리)                   │
-│                                 │
-│  ┌───────────────────────────┐  │
-│  │                           │  │
-│  │  🌪 부식의 안개              │  │
-│  │  불안정 지수 62              │  │
-│  │                           │  │
-│  │  "지하에서 분출된 황산 가스가   │  │
-│  │   대기 중 수분과 결합하며..."  │  │
-│  │                           │  │
-│  │  ⚡에너지 HIGH  💀물리 NORMAL │  │
-│  │  🫧순도 CRITICAL            │  │
-│  │                           │  │
-│  │  👁 눈: 노르스름한 안개가...   │  │
-│  │  👂 귀: 금속이 산화되며...    │  │
-│  │  ✋ 촉: 안개 방울이 따끔...    │  │
-│  │                           │  │
-│  │  ⚠ 금속 세포벽이 산성 안개에   │  │
-│  │    직접 부식될 수 있다        │  │
-│  │                           │  │
-│  │       [ 진화를 지켜본다 ]     │  │
-│  │                           │  │
-│  └───────────────────────────┘  │
-│                                 │
-└─────────────────────────────────┘
+┌────────────────────────────┬─────────────┐
+│                            │             │
+│  ┌──────────────────────┐  │  히스토리     │
+│  │ 🌪 부식의 안개          │  │             │
+│  │ "황산 가스가 대기와..."  │  │             │
+│  └──────────────────────┘  │             │
+│                            │             │
+│  ┌────────────────────┐    │             │
+│  │ (환경 이펙트 레이어)  │    │             │
+│  │  ░░▒▒░░▒▒░░▒▒░░    │    │             │
+│  │    ┌──────────┐     │    │             │
+│  │    │ 캐릭터    │     │    │             │
+│  │    └──────────┘     │    │             │
+│  │  ░░▒▒░░▒▒░░▒▒░░    │    │             │
+│  └────────────────────┘    │             │
+│                            │             │
+│  [생명체 스탯]   [진행 →]    │             │
+│                            │             │
+└────────────────────────────┴─────────────┘
 ```
 
-버튼은 **"진화를 지켜본다"** 하나만. 클릭하면 팝업 닫히고 자동 진화 진행.
+### 자동 진화 표시 (시각 이펙트 + 캐릭터 전환)
+
+환경과 마찬가지로 **팝업/모달 없이** 진화를 시각 이펙트로 표시.
+진화 상세 정보(진화 서사, 트레이드오프, 스탯 변화 등)는 **히스토리 패널에만** 기록.
+
+**동작 방식:**
+
+1. 진화 생성 API 호출은 백그라운드에서 진행
+2. 완료 시 캐릭터 전환 이펙트 재생 (모프/페이드/글리치)
+3. 진화된 캐릭터 이미지로 교체 + 이름/스탯 업데이트
+4. 진화 요약은 히스토리 패널에 노드로 추가 (poetic_line + tradeoffs)
+5. 자동으로 시련 단계로 진행
+
+메인 스테이지에는 캐릭터 전환 연출만 보이고, 플레이어는 히스토리 패널에서 상세 내용을 확인.
 
 ### 추가 합성 UI (시련 생존 보상)
 
@@ -431,7 +460,8 @@ OUTPUT SCHEMA:
     "primary_color": "영어",
     "mood": "영어",
     "key_visual": "한글 1개"
-  }
+  },
+  "duration_seconds": "10~30 정수. 이벤트의 드라마/심각도에 비례. 짧은 진동=10초, 서서히 퍼지는 안개=25초."
 }
 ```
 
@@ -722,24 +752,26 @@ function convertToPlayerAxes(envVars) {
 ### 환경 시각화 매핑
 
 ```
-Layer 1 (최하단): 그라데이션 배경 ← visual_tone.primary_color
-Layer 2:         CSS 이펙트     ← env_tags
-Layer 3:         캐릭터 이미지   ← Gemini 생성
-Layer 4 (최상단): UI 오버레이    ← 이름, 스탯, 3축 게이지
+Layer 1 (최하단): 그라데이션 배경    ← visual_tone.primary_color
+Layer 2:         환경 이펙트 오버레이 ← env_tags (EnvironmentEffects.tsx + effects.css)
+Layer 3:         캐릭터 이미지       ← Gemini 생성
+Layer 4 (최상단): UI 오버레이        ← 이름, 스탯, 3축 게이지
 ```
+
+환경 이펙트는 **두들/스케치 스타일**로 구현 (CSS 애니메이션 + 파티클):
 
 ```jsx
 const tagEffects = {
-  acidic: "hue-rotate yellow-green + drip particle",
-  corrosive_fog: "animated fog overlay + low visibility",
-  frozen: "frost border + blue tint + breath particles",
-  volcanic: "bottom lava glow + heat shimmer + ember particles",
-  irradiated: "chromatic aberration + purple flicker",
-  submerged: "blue overlay + floating particles + light caustics",
-  desiccated: "crack texture overlay + desaturation",
-  parasitic: "vine/tendril border animation + pink pulse",
-  zero_gravity: "slow floating particles + star field",
-  seismic: "periodic screen shake + crack overlay",
+  acidic: "노란-초록 틴트 + 스케치풍 잉크 방울 파티클",
+  corrosive_fog: "크로스해칭 안개 패치 + 불투명도 감소",
+  frozen: "스케치풍 서리 결정 보더 + 청회색 틴트",
+  volcanic: "하단 주황 연필 스트로크 + 잉크 점 불씨 부유",
+  irradiated: "보라 투명도 애니메이션 + 대비 필터",
+  submerged: "수평 연필 물결선 + 잉크 점 거품 부유",
+  desiccated: "균열 패턴 오버레이 + 채도 감소 필터",
+  parasitic: "가장자리 스케치풍 덩굴선 + 핑크 펄스",
+  zero_gravity: "느린 잉크 점 부유 + 작은 별 두들",
+  seismic: "주기적 화면 흔들림 키프레임 + 균열 오버레이",
 };
 ```
 
@@ -842,6 +874,7 @@ const gameState = {
     threatDetail,
     hiddenOpportunity,
     visualTone: {},
+    durationSeconds, // AI가 결정한 이펙트 재생 시간 (10~30초)
   },
 
   // 진화 결과 (현재 라운드)
@@ -870,7 +903,6 @@ const gameState = {
   // UI 상태
   loading: false,
   loadingMessage: "",
-  modalOpen: false,
 };
 ```
 
@@ -931,33 +963,57 @@ const gameState = {
 ├── index.html
 ├── package.json
 ├── vite.config.js
-├── .env                         ← VITE_GEMINI_API_KEY
+├── .env                             ← VITE_GEMINI_API_KEY
 ├── src/
-│   ├── main.jsx
-│   ├── App.jsx                  ← 메인 앱 (상태관리 + 페이즈 라우팅)
+│   ├── main.tsx
+│   ├── App.tsx                      ← 메인 앱 (상태관리 + 페이즈 라우팅)
+│   ├── types.ts                     ← 공유 타입 정의
+│   ├── vite-env.d.ts
 │   ├── api/
-│   │   ├── gemini.js            ← Gemini API 호출 함수
-│   │   ├── imageGen.js          ← 이미지 생성 함수
-│   │   └── prompts.js           ← 프롬프트 템플릿 모음
+│   │   ├── gemini.ts                ← Gemini API 호출 (structured output)
+│   │   ├── imageGen.ts              ← 이미지 생성 함수
+│   │   ├── prompts.ts               ← 프롬프트 템플릿 모음
+│   │   ├── schemas.ts               ← JSON 스키마 (structured output용)
+│   │   └── utils.ts                 ← 응답 매핑 유틸리티
 │   ├── game/
-│   │   ├── gameLoop.js          ← 게임 루프 로직
-│   │   ├── environment.js       ← 8축→3축 변환, chaos 계산
-│   │   └── stateManager.js      ← 상태 관리
+│   │   ├── environment.ts           ← 8축→3축 변환, chaos 계산
+│   │   ├── types.ts                 ← 게임 전용 타입
+│   │   ├── stateManager.ts          ← 상태 관리
+│   │   ├── firestorePersistence.ts  ← Firestore 클라우드 저장
+│   │   ├── historyService.ts        ← 히스토리 로드/조회 (NEW)
+│   │   └── worldEventExecutor.ts    ← 물리 커맨드 디스패처
+│   ├── world/
+│   │   ├── types.ts                 ← CreatureSpec, PhysicsCommand 타입
+│   │   ├── WorldScene.tsx           ← Matter.js 월드 통합
+│   │   ├── usePhysicsWorld.ts       ← 물리 훅
+│   │   ├── CreatureRenderer.tsx     ← SVG 생명체 렌더링
+│   │   └── serialization.ts        ← 직렬화
+│   ├── lib/
+│   │   ├── firebase.ts              ← Firebase 설정
+│   │   └── auth.ts                  ← 인증
 │   ├── components/
-│   │   ├── IntroScreen.jsx      ← 인트로 화면 (키워드 입력)
-│   │   ├── MainStage.jsx        ← 좌측 메인 스테이지
-│   │   ├── HistoryPanel.jsx     ← 우측 히스토리 타임라인
-│   │   ├── CreatureCard.jsx     ← 생명체 표시 (이름/스탯/이미지)
-│   │   ├── EnvironmentPopup.jsx ← 환경 변동 팝업 (관전용)
-│   │   ├── EvolutionView.jsx    ← 진화 결과 표시
-│   │   ├── TrialView.jsx        ← 시련 + 판정 결과
-│   │   ├── SynthesisView.jsx    ← 추가 합성 UI (NEW)
-│   │   ├── EpilogueView.jsx     ← 에필로그 (멸종/완료)
-│   │   ├── StatBar.jsx          ← 스탯 바
-│   │   ├── ThreatGauge.jsx      ← 3축 위협 게이지
-│   │   └── CreatureSVG.jsx      ← SVG 폴백
+│   │   ├── IntroScreen.tsx          ← 인트로 화면 (키워드 입력)
+│   │   ├── MainStage.tsx            ← 좌측 메인 스테이지
+│   │   ├── HistoryPanel.tsx         ← 우측 히스토리 타임라인
+│   │   ├── CreatureCard.tsx         ← 생명체 표시 (이름/스탯/이미지)
+│   │   ├── EnvironmentEffects.tsx   ← 환경 이펙트 오버레이 (NEW, 팝업 대체)
+│   │   ├── ChoiceModal.tsx          ← (DEPRECATED — EnvironmentEffects로 대체)
+│   │   ├── EvolutionView.tsx        ← 진화 결과 표시
+│   │   ├── TrialView.tsx            ← 시련 + 판정 결과
+│   │   ├── SynthesisView.tsx        ← 추가 합성 UI
+│   │   ├── EpilogueView.tsx         ← 에필로그 (멸종/완료)
+│   │   ├── StatBar.tsx              ← 스탯 바
+│   │   └── CreatureSVG.tsx          ← SVG 폴백
+│   ├── pages/
+│   │   └── SandboxPage.tsx          ← 테스트 페이지
 │   └── styles/
-│       └── (디자인 톤 확정 후)
+│       ├── global.css               ← 글로벌 스타일 (두들 테마)
+│       ├── intro.css                ← 인트로 화면
+│       ├── stage.css                ← 메인 스테이지
+│       ├── modal.css                ← 모달 (레거시)
+│       ├── components.css           ← 컴포넌트 공통
+│       ├── effects.css              ← 환경 이펙트 (NEW)
+│       └── world.css                ← 월드 씬
 └── public/
 ```
 
@@ -967,19 +1023,21 @@ const gameState = {
 
 ### 반드시 구현 (MVP)
 
-- [ ] 키워드 2개 입력 → Gemini 생명체 생성 (텍스트 + 이미지)
-- [ ] AI 환경 자동 생성 → 환경 팝업 표시
-- [ ] 환경 기반 자동 진화 1회
-- [ ] 시련 1회 → 생존/멸종 판정
-- [ ] 시련 생존 시 추가 합성 기회 (키워드 1개)
-- [ ] 합성 후 2라운드 진행 (환경→진화→시련)
-- [ ] 에필로그 (멸종 or 최종 서사)
-- [ ] 히스토리 패널
+- [x] 키워드 2개 입력 → Gemini 생명체 생성 (텍스트 + 이미지)
+- [x] AI 환경 자동 생성
+- [x] 환경 기반 자동 진화 1회
+- [x] 시련 1회 → 생존/멸종 판정
+- [x] 시련 생존 시 추가 합성 기회 (키워드 1개)
+- [x] 합성 후 2라운드 진행 (환경→진화→시련)
+- [x] 에필로그 (멸종 or 최종 서사)
+- [x] 히스토리 패널
+- [ ] 손그림 두들 B&W UI 테마 (종이 질감, 손글씨 폰트, 스케치 보더)
+- [ ] 환경 배경 이펙트 (env_tags 기반 CSS, 모달 없이 배경 오버레이)
+- [ ] 히스토리 Firestore 저장/로드 (세션별 이벤트 + 스냅샷)
 
 ### 시간이 남으면 추가
 
 - [ ] 3라운드 이상 반복 (chaos_level 5까지)
-- [ ] 환경 배경 이펙트 (env_tags 기반 CSS)
 - [ ] 진화 히스토리 트리 시각화
 - [ ] 생명체 도감 (생성된 생명체 컬렉션)
 - [ ] 합성 없이 계속 진행 옵션의 차별화된 서사
@@ -1012,3 +1070,47 @@ const gameState = {
 ```
 
 이러면 "합성 → 아이템 → 환경 조절"이라는 연결고리가 생겨서 개입에 근거가 생김.
+
+---
+
+## 14. 아트 스타일 가이드 (v2.1)
+
+### 컨셉
+
+"종이 위에 펜으로 그린 관찰 일지" — 손그림 두들 흑백 스케치 스타일.
+과학 노트북에 생명체의 진화를 기록하는 창조자의 관점.
+
+### 색상 팔레트
+
+| 용도 | 색상 | 코드 |
+| --- | --- | --- |
+| 배경 (종이) | 따뜻한 오프화이트 | `#faf8f2` |
+| 텍스트 (잉크) | 다크 잉크 | `#2a2a2a` |
+| 액센트 1 | 포레스트 그린 (탄생) | muted green |
+| 액센트 2 | 세피아 (환경) | sepia tone |
+| 액센트 3 | 레드브라운 (시련) | red-brown |
+| 액센트 4 | 뮤트 퍼플 (진화) | muted purple |
+
+### 타이포그래피
+
+- 한글: `Nanum Pen Script` (Google Fonts)
+- 영문/숫자: `Caveat` (Google Fonts)
+- 폴백: `cursive`
+
+### 시각 요소
+
+- **테두리**: `feTurbulence` + `feDisplacementMap` SVG 필터로 스케치풍 흔들림 효과
+- **그림자**: 글로우 없음. 플랫 오프셋 그림자 (`2px 2px 0 rgba(0,0,0,0.1)`)
+- **배경 텍스처**: CSS `repeating-linear-gradient`로 노트북 줄 표현
+- **버튼**: 아웃라인/대시 스타일, 그라데이션 없음
+- **입력 필드**: 하단 대시 밑줄 (연필선 느낌), 박스 보더 없음
+- **스탯 바**: 종이 위 잉크 채움
+- **카드**: 종이 카드 + 연필 보더
+
+### 환경 이펙트 스타일
+
+환경 이펙트도 두들 스타일로 통일:
+- 파티클은 잉크 점/스트로크로 표현
+- 안개는 크로스해칭 패턴
+- 결정/얼음은 스케치풍 선화
+- 색상은 최소한 (주로 흑백 + 환경별 단일 액센트 컬러)
