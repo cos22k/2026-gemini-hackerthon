@@ -24,10 +24,29 @@ export interface MouthSpec {
 
 export interface AdditionSpec {
   el: 'ellipse' | 'circle' | 'rect' | 'path' | 'line' | 'polygon' | 'polyline';
-  props?: Record<string, unknown>;
+  // Common SVG attributes (Gemini fills these directly)
+  d?: string;           // path data
+  cx?: number;          // circle/ellipse center x
+  cy?: number;          // circle/ellipse center y
+  r?: number;           // circle radius
+  rx?: number;          // ellipse radius x
+  ry?: number;          // ellipse radius y
+  x?: number;           // rect x
+  y?: number;           // rect y
+  width?: number;       // rect width
+  height?: number;      // rect height
+  x1?: number;          // line start x
+  y1?: number;          // line start y
+  x2?: number;          // line end x
+  y2?: number;          // line end y
+  points?: string;      // polygon/polyline points
+  transform?: string;   // SVG transform
   fill?: string;
   stroke?: string;
   strokeWidth?: number;
+  opacity?: number;
+  // Legacy passthrough
+  props?: Record<string, unknown>;
 }
 
 export interface CreatureSpec {

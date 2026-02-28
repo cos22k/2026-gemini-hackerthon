@@ -40,7 +40,17 @@ Output schema:
       "width": 14~30,
       "offsetY": 8~25
     },
-    "additions": [],
+    "additions": [
+      // SVG elements for unique features. Use the SVG coordinate system: body center = (0,0), viewBox is -100 to 100.
+      // Examples:
+      // Tentacle: { "el": "path", "d": "M0,40 Q20,70 10,95", "stroke": "#555", "strokeWidth": 3, "fill": "none" }
+      // Spot:     { "el": "circle", "cx": -20, "cy": 10, "r": 8, "fill": "#ff9999", "opacity": 0.6 }
+      // Horn:     { "el": "polygon", "points": "0,-55 -8,-35 8,-35", "fill": "#ddd", "stroke": "#222" }
+      // Antenna:  { "el": "line", "x1": -15, "y1": -50, "x2": -25, "y2": -80, "stroke": "#222", "strokeWidth": 2 }
+      // Fin:      { "el": "ellipse", "cx": 55, "cy": 0, "rx": 15, "ry": 30, "fill": "#aaddff", "stroke": "#222", "opacity": 0.7 }
+      // Wing:     { "el": "path", "d": "M50,0 Q90,-40 70,-60 Q50,-30 50,0Z", "fill": "#eeddff", "stroke": "#222" }
+      // Stripe:   { "el": "path", "d": "M-40,-10 Q0,-20 40,-10", "stroke": "#666", "strokeWidth": 2, "fill": "none" }
+    ],
     "movement": "waddle" or "bounce" or "drift" or "hop"
   }
 }
@@ -53,6 +63,8 @@ Output schema:
 - 이 생명체가 가진 근본적 딜레마를 약점에 반영하라
 - creature_spec의 body color는 키워드의 물성을 반영 (금속→은색, 장미→분홍 등)
 - creature_spec의 movement는 생명체의 성격에 맞게 선택
+- creature_spec의 additions는 반드시 2~5개 포함. 키워드의 특성을 시각적으로 표현 (촉수, 뿔, 점, 줄무늬, 날개, 가시 등)
+- additions의 좌표계: 몸 중심 = (0,0), viewBox는 -100~100. 몸 바깥으로 나가도 됨.
 - image_prompt는 영어로, "digital art, fantasy creature, botanical illustration" 스타일 키워드 포함`;
 
 export const ENVIRONMENT_SYSTEM_PROMPT = `You simulate extreme planetary environments for a fictional evolution game.

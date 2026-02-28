@@ -40,6 +40,31 @@ export const worldEventSchema = z.object({
   y: z.number().optional(),
 });
 
+export const additionSpecSchema = z.object({
+  el: z.enum(['ellipse', 'circle', 'rect', 'path', 'line', 'polygon', 'polyline']),
+  // SVG attributes — Gemini specifies these directly
+  d: z.string().optional(),           // path data
+  cx: z.number().optional(),          // circle/ellipse center
+  cy: z.number().optional(),
+  r: z.number().optional(),           // circle radius
+  rx: z.number().optional(),          // ellipse radii
+  ry: z.number().optional(),
+  x: z.number().optional(),           // rect position
+  y: z.number().optional(),
+  width: z.number().optional(),       // rect size
+  height: z.number().optional(),
+  x1: z.number().optional(),          // line endpoints
+  y1: z.number().optional(),
+  x2: z.number().optional(),
+  y2: z.number().optional(),
+  points: z.string().optional(),      // polygon/polyline points
+  transform: z.string().optional(),   // SVG transform
+  fill: z.string().optional(),
+  stroke: z.string().optional(),
+  strokeWidth: z.number().optional(),
+  opacity: z.number().optional(),
+});
+
 export const creatureSpecSchema = z.object({
   body: z.object({
     shape: z.enum(['ellipse', 'roundRect', 'blob']),
@@ -60,6 +85,7 @@ export const creatureSpecSchema = z.object({
     width: z.number().int(),
     offsetY: z.number().int(),
   }),
+  additions: z.array(additionSpecSchema).optional(),
   movement: z.enum(['waddle', 'bounce', 'drift', 'hop']),
 });
 
@@ -84,13 +110,6 @@ export const visualToneSchema = z.object({
   primary_color: z.string(),
   mood: z.string(),
   key_visual: z.string(),
-});
-
-export const additionSpecSchema = z.object({
-  el: z.enum(['ellipse', 'circle', 'rect', 'path', 'line', 'polygon', 'polyline']),
-  fill: z.string().optional(),
-  stroke: z.string().optional(),
-  strokeWidth: z.number().optional(),
 });
 
 export const specMutationSchema = z.object({

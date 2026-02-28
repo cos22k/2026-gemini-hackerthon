@@ -125,6 +125,32 @@ export function usePhysicsWorld() {
         }
       }
 
+      // Surface constraint — prevent creature from tunneling into the planet
+      {
+        const cr = creatureRef.current!;
+        const dx = cr.position.x - PLANET_CENTER.x;
+        const dy = cr.position.y - PLANET_CENTER.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const minDist = PLANET_R + CREATURE_R;
+        if (dist < minDist && dist > 0) {
+          // Push creature back to surface
+          const nx = dx / dist;
+          const ny = dy / dist;
+          Body.setPosition(cr, {
+            x: PLANET_CENTER.x + nx * minDist,
+            y: PLANET_CENTER.y + ny * minDist,
+          });
+          // Kill inward velocity component
+          const vDot = cr.velocity.x * nx + cr.velocity.y * ny;
+          if (vDot < 0) {
+            Body.setVelocity(cr, {
+              x: cr.velocity.x - vDot * nx,
+              y: cr.velocity.y - vDot * ny,
+            });
+          }
+        }
+      }
+
       // Cleanup — remove bodies that drifted too far
       for (const b of dynamicBodies) {
         if (b.label === 'creature') continue;
